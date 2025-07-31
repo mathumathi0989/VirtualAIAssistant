@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Interview Chat</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 2em auto; }
+  #chat { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; background: #fafafa; }
+  .message { margin: 10px 0; }
+  .user { text-align: right; color: blue; }
+  .ai { text-align: left; color: green; }
+  #inputArea { margin-top: 10px; display: flex; }
+  #input { flex: 1; padding: 10px; font-size: 1em; }
+  #sendBtn { padding: 10px; }
+</style>
+</head>
+<body>
+
+<h2>Virtual Interview Chat</h2>
+
+<div id="chat"></div>
+
+<div id="inputArea">
+  <input id="input" type="text" placeholder="Type your answer here..." autocomplete="off" />
+  <button id="sendBtn">Send</button>
+</div>
+
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+
+  // Show message in chat window
+  function addMessage(text, sender) {
+    const div = document.createElement('div');
+    div.className = 'message ' + sender;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  // Send user message and fetch AI response from n8n webhook
+  async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage(message, 'user');
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    try {
+      // Replace this URL with your n8n webhook URL
+      const webhookUrl = 'https://your-n8n-instance/webhook/virtual-interview';
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          sessionId: 'unique-user-session-id' // you can generate/manage this session ID on your side
+        }),
+      });
+
+      if (!response.ok) {
+        addMessage('Error: Unable to get response from AI', 'ai');
+      } else {
+        const data = await response.json();
+        addMessage(data.reply || 'No reply received', 'ai');
+      }
+    } catch (err) {
+      addMessage('Error: ' + err.message, 'ai');
+    } finally {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  // Send on button click or Enter key press
+  sendBtn.onclick = sendMessage;
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
+
+  // Initial greeting or question from AI (optional)
+  addMessage('Welcome to your AI mock interview! Please answer the questions.', 'ai');
+</script>
+
+</body>
+</html>
