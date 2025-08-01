@@ -45,11 +45,12 @@
   let email = '';
   let skill = '';
   let level = '';
- let sessionId = localStorage.getItem('sessionId');
-if (!sessionId) {
-  sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
-  localStorage.setItem('sessionId', sessionId);
-}
+  let sessionId = localStorage.getItem('sessionId');
+  if (!sessionId) {
+    sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+    localStorage.setItem('sessionId', sessionId);
+  }
+
   function addMessage(text, sender) {
     const div = document.createElement('div');
     div.className = 'message ' + sender;
@@ -100,6 +101,26 @@ if (!sessionId) {
       addMessage(`Great! You selected *${skill}*. Now please choose your experience level:`, "ai");
       showLevelOptions();
       return;
+    } else if (step === 4) {
+      // Interview ongoing - send each user answer to webhook
+      try {
+        const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
+
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, userMessage: message }),
+        });
+
+        if (!response.ok) {
+          addMessage('Error: Unable to get response from AI.', 'ai');
+        } else {
+          const data = await response.json();
+          addMessage(data.reply || '🎤 AI did not respond.', 'ai');
+        }
+      } catch (err) {
+        addMessage('Error: ' + err.message, 'ai');
+      }
     }
 
     input.disabled = false;
@@ -117,6 +138,7 @@ if (!sessionId) {
 
   async function selectLevel(selected) {
     level = selected;
+    step = 4; // Start interview loop after level selection
     addMessage(selected, 'user');
     addMessage("✅ All set! Submitting your interview preferences...", "ai");
 
@@ -150,6 +172,7 @@ if (!sessionId) {
         if (e.key === 'Enter') sendMessage();
       });
       sendBtn.onclick = sendMessage;
+      input.focus();
     }
   }
 
