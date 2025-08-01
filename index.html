@@ -34,17 +34,19 @@
   let step = 0;
   let name = '';
   let email = '';
-
-  // 🔑 Generate unique session ID per visitor
   const sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
 
-  // Show message in chat window
   function addMessage(text, sender) {
     const div = document.createElement('div');
     div.className = 'message ' + sender;
     div.textContent = text;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
+  }
+
+  function isValidEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    return regex.test(email);
   }
 
   async function sendMessage() {
@@ -59,26 +61,29 @@
     if (step === 0) {
       name = message;
       step++;
-      addMessage("Thanks! Now please enter your *Email ID*.", "ai");
+      addMessage(`Thanks ${name}! Now please enter your *Email ID*.`, "ai");
       input.disabled = false;
       sendBtn.disabled = false;
       input.focus();
     } else if (step === 1) {
+      if (!isValidEmail(message)) {
+        addMessage("⚠️ That doesn't look like a valid email. Please try again.", "ai");
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+        return;
+      }
+
       email = message;
       step++;
 
-      // Now send both name and email to webhook
       try {
         const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
 
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: name,
-            email: email,
-            sessionId: sessionId
-          }),
+          body: JSON.stringify({ name, email, sessionId }),
         });
 
         if (!response.ok) {
@@ -103,15 +108,11 @@
     }
   }
 
-  // Send on button click or Enter key press
   sendBtn.onclick = sendMessage;
   input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
+    if (e.key === 'Enter') sendMessage();
   });
 
-  // Start the chat
   addMessage("Hi there! 👋 Welcome to Interview IQ Hub. Please tell me your *Name*.", "ai");
 </script>
 
