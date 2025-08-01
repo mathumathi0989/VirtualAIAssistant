@@ -66,8 +66,14 @@
       if (!response.ok) {
         addMessage('Error: Unable to get response from AI', 'ai');
       } else {
-        const data = await response.json();
-        addMessage(data.reply || 'No reply received', 'ai');
+     let data;
+try {
+  data = await response.json();
+} catch (e) {
+  addMessage('AI did not return valid JSON.', 'ai');
+  return;
+}
+addMessage(data.reply || 'No reply received', 'ai');
       }
     } catch (err) {
       addMessage('Error: ' + err.message, 'ai');
