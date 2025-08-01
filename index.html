@@ -31,6 +31,10 @@
   const input = document.getElementById('input');
   const sendBtn = document.getElementById('sendBtn');
 
+  let step = 0;
+  let name = '';
+  let email = '';
+
   // Show message in chat window
   function addMessage(text, sender) {
     const div = document.createElement('div');
@@ -40,7 +44,6 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
-  // Send user message and fetch AI response from n8n webhook
   async function sendMessage() {
     const message = input.value.trim();
     if (!message) return;
@@ -50,37 +53,50 @@
     input.disabled = true;
     sendBtn.disabled = true;
 
-    try {
-      // Replace this URL with your n8n webhook URL
-      const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: message,
-          sessionId: 'unique-user-session-id' // you can generate/manage this session ID on your side
-        }),
-      });
-
-      if (!response.ok) {
-        addMessage('Error: Unable to get response from AI', 'ai');
-      } else {
-     let data;
-try {
-  data = await response.json();
-} catch (e) {
-  addMessage('AI did not return valid JSON.', 'ai');
-  return;
-}
-addMessage(data.reply || 'No reply received', 'ai');
-      }
-    } catch (err) {
-      addMessage('Error: ' + err.message, 'ai');
-    } finally {
+    if (step === 0) {
+      name = message;
+      step++;
+      addMessage("Thanks! Now please enter your *Email ID*.", "ai");
       input.disabled = false;
       sendBtn.disabled = false;
       input.focus();
+    } else if (step === 1) {
+      email = message;
+      step++;
+
+      // Now send both name and email to webhook
+      try {
+        const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
+
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            sessionId: 'unique-user-session-id'
+          }),
+        });
+
+        if (!response.ok) {
+          addMessage('Error: Unable to get response from AI', 'ai');
+        } else {
+          let data;
+          try {
+            data = await response.json();
+          } catch (e) {
+            addMessage('AI did not return valid JSON.', 'ai');
+            return;
+          }
+          addMessage(data.reply || 'No reply received', 'ai');
+        }
+      } catch (err) {
+        addMessage('Error: ' + err.message, 'ai');
+      } finally {
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
     }
   }
 
@@ -92,8 +108,8 @@ addMessage(data.reply || 'No reply received', 'ai');
     }
   });
 
-  // Initial greeting or question from AI (optional)
-  addMessage("Hi there! 👋 Welcome to Interview IQ Hub, Before we begin your mock interview, could you please tell me your *Name* and *Email ID*?", "ai");
+  // Start the chat
+  addMessage("Hi there! 👋 Welcome to Interview IQ Hub. Please tell me your *Name*.", "ai");
 </script>
 
 </body>
