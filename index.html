@@ -116,6 +116,7 @@
           addMessage('Error: Unable to get response from AI.', 'ai');
         } else {
           const data = await response.json();
+          console.log("🧪 Webhook Response:", data); 
           addMessage(data.reply || '🎤 AI did not respond.', 'ai');
         }
       } catch (err) {
