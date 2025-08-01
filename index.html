@@ -1,24 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI Interview Chat</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: 2em auto; }
-  #chat { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; background: #fafafa; }
-  .message { margin: 10px 0; }
-  .user { text-align: right; color: blue; }
-  .ai { text-align: left; color: green; }
-  #inputArea { margin-top: 10px; display: flex; }
-  #input { flex: 1; padding: 10px; font-size: 1em; }
-  #sendBtn { padding: 10px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Interview Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2em auto; }
+    #chat { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; background: #fafafa; }
+    .message { margin: 10px 0; }
+    .user { text-align: right; color: blue; }
+    .ai { text-align: left; color: green; }
+    #inputArea { margin-top: 10px; display: flex; }
+    #input { flex: 1; padding: 10px; font-size: 1em; }
+    #sendBtn { padding: 10px; }
+    .btn-level {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 1em;
+      border: 1px solid #333;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #eee;
+    }
+  </style>
 </head>
 <body>
 
 <h2>Virtual Interview Chat</h2>
-
 <div id="chat"></div>
 
 <div id="inputArea">
@@ -28,12 +36,15 @@
 
 <script>
   const chat = document.getElementById('chat');
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
+  let input = document.getElementById('input');
+  let sendBtn = document.getElementById('sendBtn');
+  const inputArea = document.getElementById('inputArea');
 
   let step = 0;
   let name = '';
   let email = '';
+  let skill = '';
+  let level = '';
   const sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
 
   function addMessage(text, sender) {
@@ -62,59 +73,20 @@
       name = message;
       step++;
       addMessage(`Thanks ${name}! Now please enter your *Email ID*.`, "ai");
-      input.disabled = false;
-      sendBtn.disabled = false;
-      input.focus();
     } else if (step === 1) {
       if (!isValidEmail(message)) {
-        addMessage("⚠️ That doesn't look like a valid email. Please try again.", "ai");
+        addMessage("⚠️ That doesn't look like a valid email. Please enter a valid one like `yourname@email.com`.", "ai");
         input.disabled = false;
         sendBtn.disabled = false;
         input.focus();
         return;
       }
-
       email = message;
       step++;
-
-      try {
-        const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
-
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, sessionId }),
-        });
-
-        if (!response.ok) {
-          addMessage('Error: Unable to get response from AI', 'ai');
-        } else {
-          let data;
-          try {
-            data = await response.json();
-          } catch (e) {
-            addMessage('AI did not return valid JSON.', 'ai');
-            return;
-          }
-          addMessage(data.reply || 'No reply received', 'ai');
-        }
-      } catch (err) {
-        addMessage('Error: ' + err.message, 'ai');
-      } finally {
+      addMessage("Great! Now tell me the *Skill* you want to be interviewed on.", "ai");
+    } else if (step === 2) {
+      skill = message.trim();
+      if (skill.length < 2) {
+        addMessage("❌ Please enter a valid skill like Java, Python, SQL, Selenium, AI, etc.", "ai");
         input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
-      }
-    }
-  }
-
-  sendBtn.onclick = sendMessage;
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-  });
-
-  addMessage("Hi there! 👋 Welcome to Interview IQ Hub. Please tell me your *Name*.", "ai");
-</script>
-
-</body>
-</html>
+        s
