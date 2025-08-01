@@ -89,4 +89,74 @@
       if (skill.length < 2) {
         addMessage("❌ Please enter a valid skill like Java, Python, SQL, Selenium, AI, etc.", "ai");
         input.disabled = false;
-        s
+        sendBtn.disabled = false;
+        input.focus();
+        return;
+      }
+      step++;
+      addMessage(`Great! You selected *${skill}*. Now please choose your experience level:`, "ai");
+      showLevelOptions();
+      return;
+    }
+
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+
+  function showLevelOptions() {
+    inputArea.innerHTML = `
+      <button class="btn-level" onclick="selectLevel('Beginner')">Beginner</button>
+      <button class="btn-level" onclick="selectLevel('Intermediate')">Intermediate</button>
+      <button class="btn-level" onclick="selectLevel('Advanced')">Advanced</button>
+    `;
+  }
+
+  async function selectLevel(selected) {
+    level = selected;
+    addMessage(selected, 'user');
+    addMessage("✅ All set! Submitting your interview preferences...", "ai");
+
+    try {
+      const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, skill, level, sessionId }),
+      });
+
+      if (!response.ok) {
+        addMessage('Error: Unable to get response from AI.', 'ai');
+      } else {
+        const data = await response.json();
+        addMessage(data.reply || '🎤 AI is ready to begin your interview.', 'ai');
+      }
+    } catch (err) {
+      addMessage('Error: ' + err.message, 'ai');
+    } finally {
+      // Restore input area after dropdown
+      inputArea.innerHTML = `
+        <input id="input" type="text" placeholder="Type your answer here..." autocomplete="off" />
+        <button id="sendBtn">Send</button>
+      `;
+      // Reattach events
+      input = document.getElementById('input');
+      sendBtn = document.getElementById('sendBtn');
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+      sendBtn.onclick = sendMessage;
+    }
+  }
+
+  sendBtn.onclick = sendMessage;
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  addMessage("Hi there! 👋 Welcome to Interview IQ Hub. Please tell me your *Name*.", "ai");
+</script>
+
+</body>
+</html>
