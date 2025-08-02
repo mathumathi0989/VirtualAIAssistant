@@ -115,13 +115,23 @@
         } else {
           const data = await response.json();
           console.log("🧪 Webhook Response:", data); 
+          console.log("🧪 Data type:", typeof data);
+          console.log("🧪 Is Array:", Array.isArray(data));
           
-          // Handle array response from n8n - THIS IS THE FIX!
+          // Handle different response formats
           let aiReply;
           if (Array.isArray(data) && data.length > 0) {
-            aiReply = data[0].reply || '🎤 AI did not respond.';
+            console.log("🧪 Array format - data[0]:", data[0]);
+            aiReply = data[0].reply || data[0] || '🎤 AI did not respond.';
+          } else if (data.reply) {
+            console.log("🧪 Object with reply:", data.reply);
+            aiReply = data.reply;
+          } else if (typeof data === 'string') {
+            console.log("🧪 String format:", data);
+            aiReply = data;
           } else {
-            aiReply = data.reply || '🎤 AI did not respond.';
+            console.log("🧪 Unknown format, using fallback");
+            aiReply = JSON.stringify(data); // Show the actual response for debugging
           }
           addMessage(aiReply, 'ai');
         }
@@ -163,13 +173,24 @@
       } else {
         const data = await response.json();
         console.log("🧪 Level Selection Response:", data);
+        console.log("🧪 Data type:", typeof data);
+        console.log("🧪 Is Array:", Array.isArray(data));
+        console.log("🧪 Data keys:", Object.keys(data));
         
-        // Handle array response from n8n - THIS IS THE FIX!
+        // Handle different response formats
         let aiReply;
         if (Array.isArray(data) && data.length > 0) {
-          aiReply = data[0].reply || '🎤 AI is ready to begin your interview.';
+          console.log("🧪 Array format - data[0]:", data[0]);
+          aiReply = data[0].reply || data[0] || '🎤 AI is ready to begin your interview.';
+        } else if (data.reply) {
+          console.log("🧪 Object with reply:", data.reply);
+          aiReply = data.reply;
+        } else if (typeof data === 'string') {
+          console.log("🧪 String format:", data);
+          aiReply = data;
         } else {
-          aiReply = data.reply || '🎤 AI is ready to begin your interview.';
+          console.log("🧪 Unknown format, using fallback");
+          aiReply = JSON.stringify(data); // Show the actual response for debugging
         }
         addMessage(aiReply, 'ai');
       }
