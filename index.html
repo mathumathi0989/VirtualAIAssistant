@@ -22,10 +22,22 @@
       cursor: pointer;
       background-color: #eee;
     }
+    .timer {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #ff6b6b;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
+<div class="timer" id="timer">Time: 1:00</div>
 <h2>Virtual Interview Chat</h2>
 <div id="chat"></div>
 
@@ -45,6 +57,8 @@
   let email = '';
   let skill = '';
   let level = '';
+  let interviewStartTime = null;
+  let interviewTimer = null;
   
   // Use in-memory session ID (no localStorage for Claude artifacts)
   let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
@@ -57,6 +71,55 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
+  function startInterviewTimer() {
+    interviewStartTime = Date.now();
+    addMessage("⏰ Interview started! You have 1 minute to answer as many questions as possible.", "ai");
+    
+    const timerElement = document.getElementById('timer');
+    timerElement.style.display = 'block';
+    
+    // Update timer display every second
+    const timerInterval = setInterval(() => {
+      const remaining = getRemainingTime();
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
+      timerElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+      
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        timerElement.textContent = 'Time: 0:00';
+      }
+    }, 1000);
+    
+    interviewTimer = setTimeout(() => {
+      clearInterval(timerInterval);
+      addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai");
+      input.disabled = true;
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Interview Ended";
+      timerElement.style.backgroundColor = '#666';
+    }, 60000); // 60 seconds = 1 minute
+  }
+
+  function getRemainingTime() {
+    if (!interviewStartTime) return 60;
+    const elapsed = Math.floor((Date.now() - interviewStartTime) / 1000);
+    return Math.max(0, 60 - elapsed);
+  }
+
+  function checkTimeRemaining() {
+    const remaining = getRemainingTime();
+    if (remaining <= 0) {
+      clearTimeout(interviewTimer);
+      addMessage("⏰ Time's up! Interview completed.", "ai");
+      input.disabled = true;
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Interview Ended";
+      return false;
+    }
+    return true;
+  }
+
   function isValidEmail(email) {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
     return regex.test(email);
@@ -65,6 +128,11 @@
   async function sendMessage() {
     const message = input.value.trim();
     if (!message) return;
+
+    // Check time limit during interview
+    if (step === 4 && !checkTimeRemaining()) {
+      return;
+    }
 
     addMessage(message, 'user');
     input.value = '';
@@ -238,6 +306,9 @@
         }
         
         addMessage(aiReply, 'ai');
+        
+        // Start the 1-minute timer after first AI question
+        startInterviewTimer();
       }
     } catch (err) {
       addMessage('Error: ' + err.message, 'ai');
