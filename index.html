@@ -118,21 +118,39 @@
           console.log("🧪 Data type:", typeof data);
           console.log("🧪 Is Array:", Array.isArray(data));
           
-          // Handle different response formats
-          let aiReply;
-          if (Array.isArray(data) && data.length > 0) {
-            console.log("🧪 Array format - data[0]:", data[0]);
-            aiReply = data[0].reply || data[0] || '🎤 AI did not respond.';
-          } else if (data.reply) {
-            console.log("🧪 Object with reply:", data.reply);
-            aiReply = data.reply;
-          } else if (typeof data === 'string') {
-            console.log("🧪 String format:", data);
-            aiReply = data;
-          } else {
-            console.log("🧪 Unknown format, using fallback");
-            aiReply = JSON.stringify(data); // Show the actual response for debugging
+          // Handle the weird nested response format from your n8n
+          let aiReply = '🎤 AI did not respond.';
+          
+          try {
+            // Try to find the reply in the nested structure
+            if (data && typeof data === 'object') {
+              // Look for nested reply values
+              const findReply = (obj) => {
+                if (typeof obj === 'string') return obj;
+                if (obj && obj.reply && typeof obj.reply === 'string') return obj.reply;
+                if (obj && typeof obj === 'object') {
+                  for (const key in obj) {
+                    const result = findReply(obj[key]);
+                    if (result && typeof result === 'string' && result.length > 10) {
+                      return result;
+                    }
+                  }
+                }
+                return null;
+              };
+              
+              const foundReply = findReply(data);
+              if (foundReply) {
+                aiReply = foundReply;
+              } else {
+                aiReply = JSON.stringify(data, null, 2); // Show raw data for debugging
+              }
+            }
+          } catch (error) {
+            console.error("Error parsing response:", error);
+            aiReply = "Error parsing AI response: " + JSON.stringify(data);
           }
+          
           addMessage(aiReply, 'ai');
         }
       } catch (err) {
@@ -177,21 +195,39 @@
         console.log("🧪 Is Array:", Array.isArray(data));
         console.log("🧪 Data keys:", Object.keys(data));
         
-        // Handle different response formats
-        let aiReply;
-        if (Array.isArray(data) && data.length > 0) {
-          console.log("🧪 Array format - data[0]:", data[0]);
-          aiReply = data[0].reply || data[0] || '🎤 AI is ready to begin your interview.';
-        } else if (data.reply) {
-          console.log("🧪 Object with reply:", data.reply);
-          aiReply = data.reply;
-        } else if (typeof data === 'string') {
-          console.log("🧪 String format:", data);
-          aiReply = data;
-        } else {
-          console.log("🧪 Unknown format, using fallback");
-          aiReply = JSON.stringify(data); // Show the actual response for debugging
+        // Handle the weird nested response format from your n8n
+        let aiReply = '🎤 AI is ready to begin your interview.';
+        
+        try {
+          // Try to find the reply in the nested structure
+          if (data && typeof data === 'object') {
+            // Look for nested reply values
+            const findReply = (obj) => {
+              if (typeof obj === 'string') return obj;
+              if (obj && obj.reply && typeof obj.reply === 'string') return obj.reply;
+              if (obj && typeof obj === 'object') {
+                for (const key in obj) {
+                  const result = findReply(obj[key]);
+                  if (result && typeof result === 'string' && result.length > 10) {
+                    return result;
+                  }
+                }
+              }
+              return null;
+            };
+            
+            const foundReply = findReply(data);
+            if (foundReply) {
+              aiReply = foundReply;
+            } else {
+              aiReply = JSON.stringify(data, null, 2); // Show raw data for debugging
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing response:", error);
+          aiReply = "Error parsing AI response: " + JSON.stringify(data);
         }
+        
         addMessage(aiReply, 'ai');
       }
     } catch (err) {
