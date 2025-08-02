@@ -45,11 +45,9 @@
   let email = '';
   let skill = '';
   let level = '';
-  let sessionId = localStorage.getItem('sessionId');
-  if (!sessionId) {
-    sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
-    localStorage.setItem('sessionId', sessionId);
-  }
+  
+  // Use in-memory session ID (no localStorage for Claude artifacts)
+  let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
 
   function addMessage(text, sender) {
     const div = document.createElement('div');
@@ -117,7 +115,15 @@
         } else {
           const data = await response.json();
           console.log("🧪 Webhook Response:", data); 
-          addMessage(data.reply || '🎤 AI did not respond.', 'ai');
+          
+          // Handle array response from n8n - THIS IS THE FIX!
+          let aiReply;
+          if (Array.isArray(data) && data.length > 0) {
+            aiReply = data[0].reply || '🎤 AI did not respond.';
+          } else {
+            aiReply = data.reply || '🎤 AI did not respond.';
+          }
+          addMessage(aiReply, 'ai');
         }
       } catch (err) {
         addMessage('Error: ' + err.message, 'ai');
@@ -156,7 +162,16 @@
         addMessage('Error: Unable to get response from AI.', 'ai');
       } else {
         const data = await response.json();
-        addMessage(data.reply || '🎤 AI is ready to begin your interview.', 'ai');
+        console.log("🧪 Level Selection Response:", data);
+        
+        // Handle array response from n8n - THIS IS THE FIX!
+        let aiReply;
+        if (Array.isArray(data) && data.length > 0) {
+          aiReply = data[0].reply || '🎤 AI is ready to begin your interview.';
+        } else {
+          aiReply = data.reply || '🎤 AI is ready to begin your interview.';
+        }
+        addMessage(aiReply, 'ai');
       }
     } catch (err) {
       addMessage('Error: ' + err.message, 'ai');
