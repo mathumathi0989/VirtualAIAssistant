@@ -107,7 +107,16 @@
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, userMessage: message }),
+          body: JSON.stringify({ 
+            sessionId, 
+            userMessage: message,
+            name: name,
+            email: email, 
+            skill: skill,
+            level: level,
+            step: 'ongoing_interview',
+            questionNumber: 2 // Track question number
+          }),
         });
 
         if (!response.ok) {
