@@ -60,8 +60,10 @@
   let interviewStartTime = null;
   let interviewTimer = null;
   
-  // Use in-memory session ID (no localStorage for Claude artifacts)
+  // Session tracking variables - ADDED THESE
   let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+  let questionIndex = 0;  // Track current question number
+  let topicIndex = 0;     // Track topic/category
 
   function addMessage(text, sender) {
     const div = document.createElement('div');
@@ -168,7 +170,7 @@
       showLevelOptions();
       return;
     } else if (step === 4) {
-      // Interview ongoing - send each user answer to webhook
+      // *** CHANGE #1: INTERVIEW ONGOING - Updated payload ***
       try {
         const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
 
@@ -176,14 +178,15 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            sessionId, 
-            userMessage: message,
+            sessionId: sessionId,           // Keep session consistent
             name: name,
             email: email, 
             skill: skill,
             level: level,
-            step: 'ongoing_interview',
-            questionNumber: 2 // Track question number
+            userMessage: message,           // User's answer
+            questionIndex: questionIndex,   // Current question number
+            topicIndex: topicIndex,         // Topic category
+            step: 'ongoing_interview'
           }),
         });
 
@@ -192,16 +195,13 @@
         } else {
           const data = await response.json();
           console.log("🧪 Webhook Response:", data); 
-          console.log("🧪 Data type:", typeof data);
-          console.log("🧪 Is Array:", Array.isArray(data));
           
-          // Handle the weird nested response format from your n8n
+          // Handle the response format from your n8n
           let aiReply = '🎤 AI did not respond.';
           
           try {
             // Try to find the reply in the nested structure
             if (data && typeof data === 'object') {
-              // Look for nested reply values
               const findReply = (obj) => {
                 if (typeof obj === 'string') return obj;
                 if (obj && obj.reply && typeof obj.reply === 'string') return obj.reply;
@@ -220,7 +220,7 @@
               if (foundReply) {
                 aiReply = foundReply;
               } else {
-                aiReply = JSON.stringify(data, null, 2); // Show raw data for debugging
+                aiReply = JSON.stringify(data, null, 2);
               }
             }
           } catch (error) {
@@ -229,6 +229,9 @@
           }
           
           addMessage(aiReply, 'ai');
+          
+          // *** INCREMENT QUESTION INDEX AFTER EACH USER RESPONSE ***
+          questionIndex++;
         }
       } catch (err) {
         addMessage('Error: ' + err.message, 'ai');
@@ -257,10 +260,21 @@
     try {
       const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
 
+      // *** CHANGE #2: FIRST QUESTION REQUEST - Updated payload ***
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, skill, level, sessionId }),
+        body: JSON.stringify({ 
+          sessionId: sessionId,           // Unique session ID
+          name: name, 
+          email: email, 
+          skill: skill, 
+          level: level,
+          userMessage: "",                // Empty for first question
+          questionIndex: questionIndex,   // Start with 0
+          topicIndex: topicIndex,         // Start with 0  
+          step: 'start_interview'
+        }),
       });
 
       if (!response.ok) {
@@ -268,17 +282,12 @@
       } else {
         const data = await response.json();
         console.log("🧪 Level Selection Response:", data);
-        console.log("🧪 Data type:", typeof data);
-        console.log("🧪 Is Array:", Array.isArray(data));
-        console.log("🧪 Data keys:", Object.keys(data));
         
-        // Handle the weird nested response format from your n8n
+        // Handle the response format from your n8n
         let aiReply = '🎤 AI is ready to begin your interview.';
         
         try {
-          // Try to find the reply in the nested structure
           if (data && typeof data === 'object') {
-            // Look for nested reply values
             const findReply = (obj) => {
               if (typeof obj === 'string') return obj;
               if (obj && obj.reply && typeof obj.reply === 'string') return obj.reply;
@@ -297,7 +306,7 @@
             if (foundReply) {
               aiReply = foundReply;
             } else {
-              aiReply = JSON.stringify(data, null, 2); // Show raw data for debugging
+              aiReply = JSON.stringify(data, null, 2);
             }
           }
         } catch (error) {
