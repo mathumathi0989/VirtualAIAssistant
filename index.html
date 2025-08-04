@@ -10,6 +10,7 @@
     .message { margin: 10px 0; }
     .user { text-align: right; color: blue; }
     .ai { text-align: left; color: green; }
+    .timer-msg { text-align: center; color: #ff6b6b; font-weight: bold; background: #ffe6e6; padding: 10px; border-radius: 5px; }
     #inputArea { margin-top: 10px; display: flex; }
     #input { flex: 1; padding: 10px; font-size: 1em; }
     #sendBtn { padding: 10px; }
@@ -33,6 +34,7 @@
       font-weight: bold;
       display: none;
     }
+    .disabled { background-color: #ccc !important; cursor: not-allowed !important; }
   </style>
 </head>
 <body>
@@ -59,24 +61,33 @@
   let level = '';
   let interviewStartTime = null;
   let interviewTimer = null;
-  let interviewEnded = false; // ← ADD THIS LINE - PREVENTS EXTRA QUESTIONS
+  let interviewEnded = false;
   
-  // Session tracking variables - ADDED THESE
+  // Session tracking variables
   let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
-  let questionIndex = 0;  // Track current question number
-  let topicIndex = 0;     // Track topic/category
+  let questionIndex = 0;
+  let topicIndex = 0;
 
-  function addMessage(text, sender) {
+  function addMessage(text, sender, isTimer = false) {
     const div = document.createElement('div');
-    div.className = 'message ' + sender;
+    div.className = 'message ' + sender + (isTimer ? ' timer-msg' : '');
     div.textContent = text;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   }
 
+  function disableInput() {
+    input.disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.textContent = "Interview Ended";
+    sendBtn.classList.add('disabled');
+    input.classList.add('disabled');
+    input.placeholder = "Interview has ended";
+  }
+
   function startInterviewTimer() {
     interviewStartTime = Date.now();
-    addMessage("⏰ Interview started! You have 1 minute to answer as many questions as possible.", "ai");
+    addMessage("⏰ Interview started! You have 1 minute to answer as many questions as possible.", "ai", true);
     
     const timerElement = document.getElementById('timer');
     timerElement.style.display = 'block';
@@ -96,13 +107,37 @@
     
     interviewTimer = setTimeout(() => {
       clearInterval(timerInterval);
-      interviewEnded = true; // ← ADD THIS LINE - MARK INTERVIEW AS ENDED
-      addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai");
-      input.disabled = true;
-      sendBtn.disabled = true;
-      sendBtn.textContent = "Interview Ended";
+      interviewEnded = true;
+      addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai", true);
+      disableInput();
       timerElement.style.backgroundColor = '#666';
+      
+      // Send completion status to server
+      sendCompletionStatus();
     }, 60000); // 60 seconds = 1 minute
+  }
+
+  async function sendCompletionStatus() {
+    try {
+      const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sessionId: sessionId,
+          name: name,
+          email: email, 
+          skill: skill,
+          level: level,
+          userMessage: "INTERVIEW_COMPLETED",
+          questionIndex: questionIndex,
+          topicIndex: topicIndex,
+          step: 'completed'
+        }),
+      });
+    } catch (err) {
+      console.error('Error sending completion status:', err);
+    }
   }
 
   function getRemainingTime() {
@@ -113,13 +148,13 @@
 
   function checkTimeRemaining() {
     const remaining = getRemainingTime();
-    if (remaining <= 0) {
-      clearTimeout(interviewTimer);
-      interviewEnded = true; // ← ADD THIS LINE - MARK INTERVIEW AS ENDED
-      addMessage("⏰ Time's up! Interview completed.", "ai");
-      input.disabled = true;
-      sendBtn.disabled = true;
-      sendBtn.textContent = "Interview Ended";
+    if (remaining <= 0 || interviewEnded) {
+      if (!interviewEnded) {
+        clearTimeout(interviewTimer);
+        interviewEnded = true;
+        addMessage("⏰ Time's up! Interview completed.", "ai", true);
+        disableInput();
+      }
       return false;
     }
     return true;
@@ -134,7 +169,7 @@
     const message = input.value.trim();
     if (!message) return;
 
-    // ← ADD THIS CHECK - PREVENT SENDING IF INTERVIEW ENDED
+    // Block if interview ended
     if (interviewEnded) {
       addMessage("Interview has already ended. Thank you for participating!", "ai");
       return;
@@ -179,14 +214,12 @@
       showLevelOptions();
       return;
     } else if (step === 4) {
-      // ← ADD THIS CHECK AGAIN - DOUBLE PROTECTION
       if (interviewEnded) {
         input.disabled = false;
         sendBtn.disabled = false;
         return;
       }
 
-      // *** CHANGE #1: INTERVIEW ONGOING - Updated payload ***
       try {
         const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
 
@@ -194,15 +227,15 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            sessionId: sessionId,           // Keep session consistent
+            sessionId: sessionId,
             name: name,
             email: email, 
             skill: skill,
             level: level,
-            userMessage: message,           // User's answer
-            questionIndex: questionIndex,   // Current question number
-            topicIndex: topicIndex,         // Topic category
-            step: interviewEnded ? 'completed' : 'ongoing_interview' // ← ADD THIS - SEND STATUS
+            userMessage: message,
+            questionIndex: questionIndex,
+            topicIndex: topicIndex,
+            step: interviewEnded ? 'completed' : 'ongoing_interview'
           }),
         });
 
@@ -212,11 +245,9 @@
           const data = await response.json();
           console.log("🧪 Webhook Response:", data); 
           
-          // Handle the response format from your n8n
           let aiReply = '🎤 AI did not respond.';
           
           try {
-            // Try to find the reply in the nested structure
             if (data && typeof data === 'object') {
               const findReply = (obj) => {
                 if (typeof obj === 'string') return obj;
@@ -244,10 +275,8 @@
             aiReply = "Error parsing AI response: " + JSON.stringify(data);
           }
           
-          // ← ADD THIS CHECK - DON'T SHOW RESPONSE IF INTERVIEW ENDED
           if (!interviewEnded) {
             addMessage(aiReply, 'ai');
-            // *** INCREMENT QUESTION INDEX AFTER EACH USER RESPONSE ***
             questionIndex++;
           }
         }
@@ -258,9 +287,12 @@
       }
     }
 
-    input.disabled = false;
-    sendBtn.disabled = false;
-    input.focus();
+    // Only re-enable if interview hasn't ended
+    if (!interviewEnded) {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
   }
 
   function showLevelOptions() {
@@ -273,26 +305,30 @@
 
   async function selectLevel(selected) {
     level = selected;
-    step = 4; // Start interview loop after level selection
+    step = 4;
     addMessage(selected, 'user');
     addMessage("✅ All set! Submitting your interview preferences...", "ai");
+
+    // Start timer immediately after level selection
+    setTimeout(() => {
+      startInterviewTimer();
+    }, 1000);
 
     try {
       const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
 
-      // *** CHANGE #2: FIRST QUESTION REQUEST - Updated payload ***
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          sessionId: sessionId,           // Unique session ID
+          sessionId: sessionId,
           name: name, 
           email: email, 
           skill: skill, 
           level: level,
-          userMessage: "",                // Empty for first question
-          questionIndex: questionIndex,   // Start with 0
-          topicIndex: topicIndex,         // Start with 0  
+          userMessage: "",
+          questionIndex: 1,
+          topicIndex: 0,  
           step: 'start_interview'
         }),
       });
@@ -303,7 +339,6 @@
         const data = await response.json();
         console.log("🧪 Level Selection Response:", data);
         
-        // Handle the response format from your n8n
         let aiReply = '🎤 AI is ready to begin your interview.';
         
         try {
@@ -335,9 +370,7 @@
         }
         
         addMessage(aiReply, 'ai');
-        
-        // Start the 1-minute timer after first AI question
-        startInterviewTimer();
+        questionIndex = 1;
       }
     } catch (err) {
       addMessage('Error: ' + err.message, 'ai');
@@ -351,16 +384,21 @@
       input = document.getElementById('input');
       sendBtn = document.getElementById('sendBtn');
       input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
+        if (e.key === 'Enter' && !interviewEnded) sendMessage();
       });
-      sendBtn.onclick = sendMessage;
-      input.focus();
+      sendBtn.onclick = () => {
+        if (!interviewEnded) sendMessage();
+      };
+      if (!interviewEnded) input.focus();
     }
   }
 
-  sendBtn.onclick = sendMessage;
+  sendBtn.onclick = () => {
+    if (!interviewEnded) sendMessage();
+  };
+  
   input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
+    if (e.key === 'Enter' && !interviewEnded) sendMessage();
   });
 
   addMessage("Hi there! 👋 Welcome to Interview IQ Hub. Please tell me your *Name*.", "ai");
