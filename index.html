@@ -59,6 +59,7 @@
   let level = '';
   let interviewStartTime = null;
   let interviewTimer = null;
+  let interviewEnded = false; // ← ADD THIS LINE - PREVENTS EXTRA QUESTIONS
   
   // Session tracking variables - ADDED THESE
   let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
@@ -95,6 +96,7 @@
     
     interviewTimer = setTimeout(() => {
       clearInterval(timerInterval);
+      interviewEnded = true; // ← ADD THIS LINE - MARK INTERVIEW AS ENDED
       addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai");
       input.disabled = true;
       sendBtn.disabled = true;
@@ -113,6 +115,7 @@
     const remaining = getRemainingTime();
     if (remaining <= 0) {
       clearTimeout(interviewTimer);
+      interviewEnded = true; // ← ADD THIS LINE - MARK INTERVIEW AS ENDED
       addMessage("⏰ Time's up! Interview completed.", "ai");
       input.disabled = true;
       sendBtn.disabled = true;
@@ -130,6 +133,12 @@
   async function sendMessage() {
     const message = input.value.trim();
     if (!message) return;
+
+    // ← ADD THIS CHECK - PREVENT SENDING IF INTERVIEW ENDED
+    if (interviewEnded) {
+      addMessage("Interview has already ended. Thank you for participating!", "ai");
+      return;
+    }
 
     // Check time limit during interview
     if (step === 4 && !checkTimeRemaining()) {
@@ -170,6 +179,13 @@
       showLevelOptions();
       return;
     } else if (step === 4) {
+      // ← ADD THIS CHECK AGAIN - DOUBLE PROTECTION
+      if (interviewEnded) {
+        input.disabled = false;
+        sendBtn.disabled = false;
+        return;
+      }
+
       // *** CHANGE #1: INTERVIEW ONGOING - Updated payload ***
       try {
         const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
@@ -186,7 +202,7 @@
             userMessage: message,           // User's answer
             questionIndex: questionIndex,   // Current question number
             topicIndex: topicIndex,         // Topic category
-            step: 'ongoing_interview'
+            step: interviewEnded ? 'completed' : 'ongoing_interview' // ← ADD THIS - SEND STATUS
           }),
         });
 
@@ -228,13 +244,17 @@
             aiReply = "Error parsing AI response: " + JSON.stringify(data);
           }
           
-          addMessage(aiReply, 'ai');
-          
-          // *** INCREMENT QUESTION INDEX AFTER EACH USER RESPONSE ***
-          questionIndex++;
+          // ← ADD THIS CHECK - DON'T SHOW RESPONSE IF INTERVIEW ENDED
+          if (!interviewEnded) {
+            addMessage(aiReply, 'ai');
+            // *** INCREMENT QUESTION INDEX AFTER EACH USER RESPONSE ***
+            questionIndex++;
+          }
         }
       } catch (err) {
-        addMessage('Error: ' + err.message, 'ai');
+        if (!interviewEnded) {
+          addMessage('Error: ' + err.message, 'ai');
+        }
       }
     }
 
