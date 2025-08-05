@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Interview Chat</title>
+  <title>AI Interview Chat - Improved</title>
   <style>
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -85,6 +85,17 @@
       margin: 20px auto;
       max-width: 90%;
       box-shadow: 0 4px 8px rgba(220, 53, 69, 0.1);
+    }
+    
+    .interviewer-note {
+      background: #e8f4f8;
+      border-left: 4px solid #2196F3;
+      color: #1565C0;
+      font-style: italic;
+      padding: 10px 15px;
+      margin: 10px auto;
+      border-radius: 5px;
+      font-size: 0.9em;
     }
     
     #inputArea { 
@@ -208,6 +219,17 @@
       background: #f8fafc;
       border-radius: 6px;
     }
+    
+    .topic-indicator {
+      text-align: center;
+      color: #4f46e5;
+      font-size: 0.85em;
+      margin: 5px 0;
+      padding: 5px;
+      background: #eef2ff;
+      border-radius: 4px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -217,6 +239,9 @@
 
 <div class="container">
   <h2>🎯 Interview IQ Hub</h2>
+  <div class="topic-indicator" id="topicIndicator" style="display: none;">
+    Current Topic: <span id="currentTopicName">Fundamentals</span>
+  </div>
   <div class="question-counter" id="questionCounter" style="display: none;">
     Question <span id="currentQuestion">1</span> of <span id="totalQuestions">~8-10</span>
   </div>
@@ -234,7 +259,9 @@
   let sendBtn = document.getElementById('sendBtn');
   const inputArea = document.getElementById('inputArea');
   const questionCounter = document.getElementById('questionCounter');
+  const topicIndicator = document.getElementById('topicIndicator');
   const currentQuestionSpan = document.getElementById('currentQuestion');
+  const currentTopicSpan = document.getElementById('currentTopicName');
   const statusIndicator = document.getElementById('status');
 
   let step = 0;
@@ -250,23 +277,54 @@
   // Enhanced session tracking
   let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
   let questionIndex = 0;
-  let topicIndex = 0;
   let currentTopic = '';
-  let questionsInCurrentTopic = 0;
-  let maxQuestionsPerTopic = 3;
-
-  // Interview progress tracking
-  let interviewStarted = false;
   let totalQuestionsAsked = 0;
-  let correctAnswers = 0;
-  let topics = [];
+  let topicsDiscussed = [];
 
-  function addMessage(text, sender, isTimer = false) {
+  // Topic mapping for better organization
+  const topicMap = {
+    1: "Fundamentals",
+    2: "Fundamentals", 
+    3: "Practical Application",
+    4: "Practical Application",
+    5: "Advanced Concepts",
+    6: "Advanced Concepts",
+    7: "Problem Solving",
+    8: "Best Practices"
+  };
+
+  // Level-specific question banks for fallback
+  const questionBanks = {
+    'manual testing': {
+      'Beginner': [
+        "What is manual testing and how is it different from automated testing?",
+        "Can you explain the basic steps in manual testing process?",
+        "What are test cases and how do you write them?",
+        "What is the difference between verification and validation?",
+        "Can you name some common types of manual testing?"
+      ],
+      'Intermediate': [
+        "How do you prioritize test cases when time is limited?",
+        "Explain different testing techniques you use for thorough coverage",
+        "How do you handle testing in Agile environments?",
+        "What's your approach to exploratory testing?",
+        "How do you ensure traceability between requirements and test cases?"
+      ],
+      'Advanced': [
+        "How do you design a comprehensive test strategy for a complex application?",
+        "What's your approach to risk-based testing?",
+        "How do you mentor junior testers and improve team processes?",
+        "How do you balance manual and automated testing in your projects?",
+        "What metrics do you use to measure testing effectiveness?"
+      ]
+    }
+  };
+
+  function addMessage(text, sender, isTimer = false, isNote = false) {
     const div = document.createElement('div');
-    div.className = 'message ' + sender + (isTimer ? ' timer-msg' : '');
+    div.className = 'message ' + sender + (isTimer ? ' timer-msg' : '') + (isNote ? ' interviewer-note' : '');
     
-    // Handle multi-line text properly
-    if (isTimer) {
+    if (isTimer || isNote) {
       div.textContent = text;
     } else {
       div.innerHTML = text.replace(/\n/g, '<br>');
@@ -279,7 +337,15 @@
   function updateQuestionCounter() {
     if (interviewStarted && questionIndex > 0) {
       questionCounter.style.display = 'block';
+      topicIndicator.style.display = 'block';
       currentQuestionSpan.textContent = questionIndex;
+      
+      const topic = topicMap[questionIndex] || "General Discussion";
+      currentTopicSpan.textContent = topic;
+      
+      if (!topicsDiscussed.includes(topic)) {
+        topicsDiscussed.push(topic);
+      }
     }
   }
 
@@ -291,6 +357,61 @@
     } else {
       statusIndicator.className = 'status-indicator status-active';
     }
+  }
+
+  function assessAnswerQuality(answer) {
+    const lowQualityIndicators = ['no idea', 'dont know', 'cant answer', 'no', 'idk', 'dunno'];
+    const trimmedAnswer = answer.toLowerCase().trim();
+    
+    if (trimmedAnswer.length < 5) return 'very_weak';
+    
+    const hasLowQualityIndicator = lowQualityIndicators.some(indicator => 
+      trimmedAnswer.includes(indicator)
+    );
+    
+    if (hasLowQualityIndicator) return 'weak';
+    if (trimmedAnswer.length < 20) return 'basic';
+    return 'good';
+  }
+
+  function generateFallbackQuestion() {
+    const skillQuestions = questionBanks[skill.toLowerCase()];
+    if (skillQuestions && skillQuestions[level]) {
+      const questionPool = skillQuestions[level];
+      const randomIndex = Math.floor(Math.random() * questionPool.length);
+      return questionPool[randomIndex];
+    }
+    // Generic fallback
+    return `Can you tell me about your experience with ${skill}?`;
+  }
+
+  function generateContextualPrompt(userMessage, answerQuality) {
+    const topic = topicMap[questionIndex] || "General";
+    
+    // This function is now mainly for fallback - the main prompting is handled by n8n
+    let prompt = `You are an experienced ${skill} interviewer talking to ${name}, an ${level} level candidate.
+
+CONTEXT:
+- Current question: ${questionIndex}
+- Current topic: ${topic}
+- Previous answer quality: ${answerQuality}
+- Previous answer: "${userMessage}"
+
+INSTRUCTIONS:
+1. Act like a real interviewer - be conversational and encouraging
+2. Give brief, specific feedback on their previous answer
+3. ${answerQuality === 'weak' || answerQuality === 'very_weak' ? 
+      'Since they struggled, offer help or ask a simpler related question' : 
+      'Build on their answer with a follow-up question'}
+4. Keep questions focused on ${skill} for ${level} level
+5. Ask ONE clear question only
+
+RESPONSE FORMAT:
+[Brief feedback on previous answer] [One specific follow-up question]
+
+Example: "Good explanation of the basics! Now, can you tell me about a specific testing scenario you've encountered?"`;
+
+    return prompt;
   }
 
   function disableInput() {
@@ -319,14 +440,12 @@
     const timerElement = document.getElementById('timer');
     timerElement.style.display = 'block';
     
-    // Update timer display every second
     const timerInterval = setInterval(() => {
       const remaining = getRemainingTime();
       const minutes = Math.floor(remaining / 60);
       const seconds = remaining % 60;
       timerElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
       
-      // Warning at 30 seconds
       if (remaining === 30) {
         addMessage("⚠️ 30 seconds remaining! Wrap up your current answer.", "ai", true);
         timerElement.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
@@ -335,25 +454,34 @@
       if (remaining <= 0) {
         clearInterval(timerInterval);
         timerElement.textContent = 'Time: 0:00';
+        endInterview();
       }
     }, 1000);
     
     interviewTimer = setTimeout(() => {
       clearInterval(timerInterval);
-      interviewEnded = true;
-      addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai", true);
-      addMessage(`📊 Interview Summary: ${totalQuestionsAsked} questions asked across ${topics.length} topics.`, "ai");
-      disableInput();
-      timerElement.style.background = '#6b7280';
-      
-      sendCompletionStatus();
-    }, 180000); // 3 minutes
+      endInterview();
+    }, 180000);
+  }
+
+  function endInterview() {
+    if (interviewEnded) return;
+    
+    interviewEnded = true;
+    addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai", true);
+    addMessage(`📊 Interview Summary: ${totalQuestionsAsked} questions asked across ${topicsDiscussed.length} topics: ${topicsDiscussed.join(', ')}.`, "ai");
+    disableInput();
+    
+    const timerElement = document.getElementById('timer');
+    timerElement.style.background = '#6b7280';
+    
+    sendCompletionStatus();
   }
 
   async function sendCompletionStatus() {
     try {
       const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
-      const response = await fetch(webhookUrl, {
+      await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -364,16 +492,11 @@
           level: level,
           userMessage: "INTERVIEW_COMPLETED",
           questionIndex: questionIndex,
-          topicIndex: topicIndex,
           step: 'completed',
           totalQuestions: totalQuestionsAsked,
-          topics: topics.join(', ')
+          topics: topicsDiscussed.join(', ')
         }),
       });
-      
-      if (!response.ok) {
-        console.error('Failed to send completion status');
-      }
     } catch (err) {
       console.error('Error sending completion status:', err);
     }
@@ -389,10 +512,7 @@
     const remaining = getRemainingTime();
     if (remaining <= 0 || interviewEnded) {
       if (!interviewEnded) {
-        clearTimeout(interviewTimer);
-        interviewEnded = true;
-        addMessage("⏰ Time's up! Interview completed.", "ai", true);
-        disableInput();
+        endInterview();
       }
       return false;
     }
@@ -405,10 +525,7 @@
   }
 
   function isValidSkill(skill) {
-    // Allow any skill with basic validation
     const trimmedSkill = skill.trim().toLowerCase();
-    
-    // Basic validation: must contain letters and be reasonable length
     const hasLetters = /[a-zA-Z]/.test(trimmedSkill);
     const isReasonableLength = trimmedSkill.length >= 2 && trimmedSkill.length <= 50;
     const isNotJustNumbers = !/^\d+$/.test(trimmedSkill);
@@ -476,7 +593,11 @@
 
       try {
         totalQuestionsAsked++;
+        const answerQuality = assessAnswerQuality(message);
         updateQuestionCounter();
+
+        // Create a more intelligent prompt
+        const intelligentPrompt = generateContextualPrompt(message, answerQuality);
 
         const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
         const requestBody = { 
@@ -487,13 +608,11 @@
           level: level,
           userMessage: message,
           questionIndex: questionIndex,
-          topicIndex: topicIndex,
-          step: interviewEnded ? 'completed' : 'ongoing_interview',
-          questionsInCurrentTopic: questionsInCurrentTopic,
-          currentTopic: currentTopic
+          step: 'ongoing_interview',
+          currentTopic: topicMap[questionIndex] || "General",
+          answerQuality: answerQuality,
+          customPrompt: intelligentPrompt
         };
-
-        console.log('Sending request:', requestBody);
 
         const response = await fetch(webhookUrl, {
           method: 'POST',
@@ -501,17 +620,12 @@
           body: JSON.stringify(requestBody),
         });
 
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Get response as text first to debug
         const responseText = await response.text();
-        console.log('Raw response:', responseText);
-
+        
         if (!responseText.trim()) {
           throw new Error('Empty response from server');
         }
@@ -520,34 +634,16 @@
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
           throw new Error('Invalid JSON response from server');
         }
 
-        console.log("🧪 Webhook Response:", data); 
-        
-        let aiReply = '🤖 Processing your response...';
+        let aiReply = 'Let me ask you another question...';
         
         if (data && typeof data === 'object') {
-          const findReply = (obj) => {
-            if (typeof obj === 'string' && obj.length > 5) return obj;
-            if (obj && obj.reply && typeof obj.reply === 'string') return obj.reply;
-            if (obj && typeof obj === 'object') {
-              for (const key in obj) {
-                const result = findReply(obj[key]);
-                if (result && typeof result === 'string' && result.length > 10) {
-                  return result;
-                }
-              }
-            }
-            return null;
-          };
-          
-          const foundReply = findReply(data);
-          if (foundReply) {
-            aiReply = foundReply;
-          } else {
-            aiReply = "I'm processing your answer. Let me ask you another question to continue.";
+          if (data.reply && typeof data.reply === 'string') {
+            aiReply = data.reply;
+          } else if (typeof data === 'string' && data.length > 10) {
+            aiReply = data;
           }
         }
         
@@ -562,24 +658,17 @@
       } catch (err) {
         console.error('Request error:', err);
         if (!interviewEnded) {
-          addMessage('⚠️ Connection issue. Let me ask you another question to continue the interview.', 'ai');
+          const answerQuality = assessAnswerQuality(message);
           
-          // Universal fallback questions for any skill
-          const fallbackQuestions = {
-            default: [
-              `What are the key concepts or principles in ${skill}?`,
-              `How would you explain ${skill} to someone new to it?`,
-              `What are some common tools or methodologies used in ${skill}?`,
-              `Can you describe a practical application of ${skill}?`,
-              `What challenges have you faced while working with ${skill}?`
-            ]
-          };
-          
-          const fallbackList = fallbackQuestions.default;
-          const randomQuestion = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+          if (answerQuality === 'weak' || answerQuality === 'very_weak') {
+            addMessage("That's okay! Let me help you with a simpler question.", "ai", false, true);
+          } else {
+            addMessage("Good! Let me ask you about another aspect.", "ai", false, true);
+          }
           
           setTimeout(() => {
-            addMessage(randomQuestion, 'ai');
+            const fallbackQuestion = generateFallbackQuestion();
+            addMessage(fallbackQuestion, 'ai');
             questionIndex++;
             updateQuestionCounter();
           }, 1000);
@@ -617,6 +706,19 @@
 
     try {
       const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
+      const improvedPrompt = `You are an expert ${skill} interviewer conducting a ${level} level technical interview with ${name}.
+
+FIRST QUESTION: Ask one foundational ${skill} question appropriate for ${level} level.
+
+LEVEL GUIDELINES:
+- Beginner: Basic concepts, definitions, simple scenarios
+- Intermediate: Practical applications, tools, real-world examples  
+- Advanced: Strategy, complex scenarios, best practices, leadership
+
+Be conversational and encouraging. Ask ONE clear question only.
+
+Start now with: "Great! Let's begin with a fundamental question about ${skill}..."`;
+
       const requestBody = { 
         sessionId: sessionId,
         name: name, 
@@ -625,11 +727,9 @@
         level: level,
         userMessage: "",
         questionIndex: 1,
-        topicIndex: 0,  
-        step: 'start_interview'
+        step: 'start_interview',
+        customPrompt: improvedPrompt
       };
-
-      console.log('Level selection request:', requestBody);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -642,8 +742,7 @@
       }
 
       const responseText = await response.text();
-      console.log('Level selection raw response:', responseText);
-
+      
       if (!responseText.trim()) {
         throw new Error('Empty response from server');
       }
@@ -652,32 +751,16 @@
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('JSON parse error:', parseError);
         throw new Error('Invalid JSON response from server');
       }
 
-      console.log("🧪 Level Selection Response:", data);
-      
-      let aiReply = '🎯 Let\'s begin your technical interview!';
+      let aiReply = `Great! Let's begin with a fundamental question about ${skill}...`;
       
       if (data && typeof data === 'object') {
-        const findReply = (obj) => {
-          if (typeof obj === 'string' && obj.length > 5) return obj;
-          if (obj && obj.reply && typeof obj.reply === 'string') return obj.reply;
-          if (obj && typeof obj === 'object') {
-            for (const key in obj) {
-              const result = findReply(obj[key]);
-              if (result && typeof result === 'string' && result.length > 10) {
-                return result;
-              }
-            }
-          }
-          return null;
-        };
-        
-        const foundReply = findReply(data);
-        if (foundReply) {
-          aiReply = foundReply;
+        if (data.reply && typeof data.reply === 'string') {
+          aiReply = data.reply;
+        } else if (typeof data === 'string' && data.length > 10) {
+          aiReply = data;
         }
       }
       
@@ -695,19 +778,28 @@
       console.error('Level selection error:', err);
       addMessage('⚠️ Connection issue, but let\'s proceed with your interview!', 'ai');
       
-      // Universal fallback first questions for any skill
-      const firstQuestions = {
-        default: [
-          `Let's start with the basics - What are the fundamental concepts of ${skill}?`,
-          `Let's begin - How would you define ${skill} and its main purpose?`,
-          `Let's start - What makes ${skill} important in today's technology landscape?`,
-          `Let's begin - What are the core principles or methodologies in ${skill}?`,
-          `Let's start - Can you explain the basic components or elements of ${skill}?`
-        ]
+      // Level-specific fallback questions
+      const getFirstQuestion = () => {
+        if (skill.toLowerCase().includes('manual testing') || skill.toLowerCase().includes('testing')) {
+          if (level === 'Beginner') {
+            return "Let's start with the basics - What is manual testing and how is it different from automated testing?";
+          } else if (level === 'Intermediate') {
+            return "Great! Let's begin - How do you approach test case design and prioritization in your projects?";
+          } else {
+            return "Excellent! Let's start - How do you design a comprehensive test strategy for complex applications?";
+          }
+        } else {
+          if (level === 'Beginner') {
+            return `Let's start with the fundamentals - Can you explain what ${skill} is and its main purpose?`;
+          } else if (level === 'Intermediate') {
+            return `Great! Let's begin - How do you apply ${skill} in real-world projects?`;
+          } else {
+            return `Excellent! Let's start - What advanced concepts and best practices do you follow in ${skill}?`;
+          }
+        }
       };
       
-      const questionList = firstQuestions.default;
-      const firstQuestion = questionList[Math.floor(Math.random() * questionList.length)];
+      const firstQuestion = getFirstQuestion();
       
       startInterviewTimer();
       
@@ -727,7 +819,6 @@
       input = document.getElementById('input');
       sendBtn = document.getElementById('sendBtn');
       
-      // Handle textarea enter key properly
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey && !interviewEnded) {
           e.preventDefault();
