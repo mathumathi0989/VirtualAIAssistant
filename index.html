@@ -92,6 +92,7 @@
     timerStarted = true;
     interviewStartTime = Date.now();
     addMessage("⏰ Lets start our interview! You have 3 minutes to answer as many questions as possible.", "ai", true);
+    addMessage("Your time starts now;", "ai", true);
     
     const timerElement = document.getElementById('timer');
     timerElement.style.display = 'block';
@@ -369,12 +370,14 @@
         }
         
         if (!interviewEnded) {
-          // Start timer ONLY after first question is displayed
-          setTimeout(() => {
-            startInterviewTimer();
-          }, 1000); // Delay to ensure question is displayed first
+          // Start timer message BEFORE displaying the first question
+          startInterviewTimer();
           
-          addMessage(aiReply, 'ai');
+          // Add a small delay before showing the first question
+          setTimeout(() => {
+            addMessage(aiReply, 'ai');
+          }, 500);
+          
           questionIndex = 1;
         }
       }
