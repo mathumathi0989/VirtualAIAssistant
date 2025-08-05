@@ -3,252 +3,251 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Interview Chat - Improved</title>
+  <title>AI Interview Chat - Black & White</title>
   <style>
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      max-width: 700px; 
-      margin: 2em auto; 
-      padding: 0 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #000000 0%, #1A1A2E 50%, #16213E 100%);
+      color: white;
+      height: 100vh;
+      width: 100%;
+      max-width: 436px;
+      overflow: hidden;
+      position: relative;
+      margin: 0 auto;
     }
     
     .container {
-      background: white;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 15px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      height: calc(100vh - 40px);
+      margin: 20px;
       padding: 20px;
-      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
     }
     
     h2 {
       text-align: center;
-      color: #333;
-      margin-bottom: 30px;
-      font-size: 2em;
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: white;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 10px;
     }
     
     #chat { 
-      border: 2px solid #e1e8ed; 
-      height: 450px; 
-      overflow-y: auto; 
-      padding: 20px; 
-      background: linear-gradient(to bottom, #f8fafc, #ffffff);
-      border-radius: 12px;
-      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      margin-bottom: 15px;
     }
     
     .message { 
-      margin: 15px 0; 
-      padding: 12px 16px;
-      border-radius: 18px;
-      max-width: 80%;
+      margin: 12px 0;
+      padding: 10px 14px;
+      border-radius: 15px;
+      max-width: 85%;
       word-wrap: break-word;
       animation: fadeIn 0.3s ease-in;
+      font-size: 0.9em;
+      line-height: 1.4;
     }
     
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
     .user { 
-      text-align: right; 
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
+      text-align: right;
+      background: linear-gradient(135deg, #ffffff, #e5e5e5);
+      color: black;
       margin-left: auto;
       border-bottom-right-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
     .ai { 
-      text-align: left; 
-      background: #f1f5f9;
-      color: #334155;
+      text-align: left;
+      background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+      color: white;
       margin-right: auto;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-bottom-left-radius: 4px;
     }
     
     .timer-msg { 
-      text-align: center; 
-      color: #dc3545; 
-      font-weight: bold; 
-      background: linear-gradient(135deg, #ffe6e6, #fff0f0);
-      padding: 15px; 
-      border-radius: 10px; 
-      border: 2px solid #fecaca;
-      margin: 20px auto;
+      text-align: center;
+      color: #ff6b6b;
+      font-weight: bold;
+      background: rgba(255, 107, 107, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      margin: 15px auto;
       max-width: 90%;
-      box-shadow: 0 4px 8px rgba(220, 53, 69, 0.1);
     }
     
-    .interviewer-note {
-      background: #e8f4f8;
-      border-left: 4px solid #2196F3;
-      color: #1565C0;
-      font-style: italic;
-      padding: 10px 15px;
-      margin: 10px auto;
-      border-radius: 5px;
-      font-size: 0.9em;
+    .debug-info {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid #3b82f6;
+      color: #93c5fd;
+      font-size: 0.75em;
+      padding: 6px 10px;
+      margin: 6px auto;
+      border-radius: 3px;
+      max-width: 95%;
+      font-family: monospace;
     }
     
     #inputArea { 
-      margin-top: 15px; 
-      display: flex; 
-      gap: 10px;
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
       align-items: flex-end;
     }
     
     #input { 
-      flex: 1; 
-      padding: 15px; 
-      font-size: 1em; 
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
+      flex: 1;
+      padding: 12px;
+      font-size: 0.9em;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
       outline: none;
       transition: all 0.3s ease;
-      resize: vertical;
-      min-height: 50px;
-      max-height: 120px;
+      resize: none;
+      min-height: 40px;
+      max-height: 80px;
       font-family: inherit;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    
+    #input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
     }
     
     #input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.15);
     }
     
     #sendBtn { 
-      padding: 15px 25px; 
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #ffffff, #e5e5e5);
+      color: black;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: 600;
       transition: all 0.3s ease;
-      min-width: 80px;
+      min-width: 60px;
+      font-size: 0.9em;
     }
     
     #sendBtn:hover:not(.disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+      background: linear-gradient(135deg, #f0f0f0, #d0d0d0);
+      transform: translateY(-1px);
     }
     
     .btn-level {
-      margin: 8px;
-      padding: 12px 20px;
-      font-size: 1em;
-      border: 2px solid #667eea;
-      border-radius: 25px;
+      margin: 6px;
+      padding: 10px 16px;
+      font-size: 0.9em;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 20px;
       cursor: pointer;
-      background: white;
-      color: #667eea;
-      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: 500;
       transition: all 0.3s ease;
     }
     
     .btn-level:hover {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: translateY(-1px);
     }
     
     .timer {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #dc3545, #e74c3c);
+      top: 15px;
+      right: 15px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
       color: white;
-      padding: 15px 20px;
-      border-radius: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
       font-weight: bold;
+      font-size: 0.8em;
       display: none;
-      box-shadow: 0 8px 16px rgba(220, 53, 69, 0.3);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       z-index: 1000;
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .disabled { 
-      background: #9ca3af !important; 
-      cursor: not-allowed !important; 
+      background: #4a4a4a !important;
+      color: #888 !important;
+      cursor: not-allowed !important;
       transform: none !important;
-      box-shadow: none !important;
-    }
-    
-    .status-indicator {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      padding: 10px 15px;
-      border-radius: 8px;
-      font-size: 0.9em;
-      font-weight: 600;
-      display: none;
-    }
-    
-    .status-active {
-      background: #10b981;
-      color: white;
-    }
-    
-    .status-ended {
-      background: #6b7280;
-      color: white;
     }
     
     .question-counter {
       text-align: center;
-      color: #6b7280;
-      font-size: 0.9em;
-      margin: 10px 0;
-      padding: 8px;
-      background: #f8fafc;
-      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.8em;
+      margin: 8px 0;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Custom scrollbar */
+    #chat::-webkit-scrollbar {
+      width: 4px;
     }
     
-    .topic-indicator {
-      text-align: center;
-      color: #4f46e5;
-      font-size: 0.85em;
-      margin: 5px 0;
-      padding: 5px;
-      background: #eef2ff;
-      border-radius: 4px;
-      font-weight: 600;
+    #chat::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    #chat::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+    }
+    
+    #chat::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
     }
   </style>
 </head>
 <body>
 
 <div class="timer" id="timer">Time: 3:00</div>
-<div class="status-indicator" id="status">Interview Active</div>
 
 <div class="container">
-  <h2>🎯 Interview IQ Hub</h2>
-  <div class="topic-indicator" id="topicIndicator" style="display: none;">
-    Current Topic: <span id="currentTopicName">Fundamentals</span>
-  </div>
+  <h2>🎯 AI Interview Hub</h2>
   <div class="question-counter" id="questionCounter" style="display: none;">
-    Question <span id="currentQuestion">1</span> of <span id="totalQuestions">~8-10</span>
+    Q<span id="currentQuestion">1</span>: <span id="currentTopic">Fundamentals</span>
   </div>
   <div id="chat"></div>
 
   <div id="inputArea">
-    <textarea id="input" placeholder="Type your answer here... (Press Shift+Enter for new line, Enter to send)" autocomplete="off" rows="2"></textarea>
+    <textarea id="input" placeholder="Type your answer..." autocomplete="off" rows="1"></textarea>
     <button id="sendBtn">Send</button>
   </div>
 </div>
@@ -259,10 +258,8 @@
   let sendBtn = document.getElementById('sendBtn');
   const inputArea = document.getElementById('inputArea');
   const questionCounter = document.getElementById('questionCounter');
-  const topicIndicator = document.getElementById('topicIndicator');
   const currentQuestionSpan = document.getElementById('currentQuestion');
-  const currentTopicSpan = document.getElementById('currentTopicName');
-  const statusIndicator = document.getElementById('status');
+  const currentTopicSpan = document.getElementById('currentTopic');
 
   let step = 0;
   let name = '';
@@ -270,172 +267,225 @@
   let skill = '';
   let level = '';
   let interviewStartTime = null;
-  let interviewTimer = null;
   let interviewEnded = false;
   let timerStarted = false;
   
-  // Enhanced session tracking
   let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
   let questionIndex = 0;
-  let currentTopic = '';
   let totalQuestionsAsked = 0;
-  let topicsDiscussed = [];
 
-  // Topic mapping for better organization
-  const topicMap = {
-    1: "Fundamentals",
-    2: "Fundamentals", 
-    3: "Practical Application",
-    4: "Practical Application",
-    5: "Advanced Concepts",
-    6: "Advanced Concepts",
-    7: "Problem Solving",
-    8: "Best Practices"
-  };
-
-  // Level-specific question banks for fallback
+  // Enhanced question banks
   const questionBanks = {
-    'manual testing': {
+    'sql': {
       'Beginner': [
-        "What is manual testing and how is it different from automated testing?",
-        "Can you explain the basic steps in manual testing process?",
-        "What are test cases and how do you write them?",
-        "What is the difference between verification and validation?",
-        "Can you name some common types of manual testing?"
+        "What is SQL and what does it stand for?",
+        "Explain the difference between SELECT, INSERT, UPDATE, and DELETE statements.",
+        "What is a primary key and why is it important in database design?",
+        "How do you retrieve all records from a table called 'employees'?",
+        "What's the difference between WHERE and HAVING clauses?"
       ],
       'Intermediate': [
-        "How do you prioritize test cases when time is limited?",
-        "Explain different testing techniques you use for thorough coverage",
-        "How do you handle testing in Agile environments?",
-        "What's your approach to exploratory testing?",
-        "How do you ensure traceability between requirements and test cases?"
+        "Explain the different types of SQL JOINs with practical examples.",
+        "How would you find the second highest salary from an employees table?",
+        "What are database indexes and how do they improve query performance?",
+        "Write a query to find and remove duplicate records from a table.",
+        "Explain the difference between UNION and UNION ALL operations."
       ],
       'Advanced': [
-        "How do you design a comprehensive test strategy for a complex application?",
-        "What's your approach to risk-based testing?",
-        "How do you mentor junior testers and improve team processes?",
-        "How do you balance manual and automated testing in your projects?",
-        "What metrics do you use to measure testing effectiveness?"
+        "How would you optimize a slow-performing complex SQL query?",
+        "Explain window functions and provide a real-world use case.",
+        "What are stored procedures and when should you use them over regular queries?",
+        "How do you ensure database transactions maintain ACID properties?",
+        "Describe your approach to designing database schemas for scalable applications."
+      ]
+    },
+    'java': {
+      'Beginner': [
+        "What is Java and what are its main features that make it popular?",
+        "Explain the difference between JDK, JRE, and JVM.",
+        "What are the primitive data types in Java and their memory sizes?",
+        "How do you handle user input in a Java console application?",
+        "What's the difference between == and .equals() when comparing strings?"
+      ],
+      'Intermediate': [
+        "Explain inheritance, polymorphism, and encapsulation in Java.",
+        "What's the difference between ArrayList and LinkedList performance-wise?",
+        "How does exception handling work with try-catch-finally blocks?",
+        "When would you use an interface versus an abstract class?",
+        "Explain how multithreading works and potential synchronization issues."
+      ],
+      'Advanced': [
+        "How does Java's garbage collection work and what are the different GC algorithms?",
+        "Describe design patterns you've implemented in production Java code.",
+        "How do Java 8+ Streams improve code readability and performance?",
+        "What strategies do you use for Java application performance optimization?",
+        "How do you design and implement scalable microservices in Java?"
+      ]
+    },
+    'python': {
+      'Beginner': [
+        "What makes Python different from other programming languages?",
+        "Explain the difference between lists, tuples, and dictionaries in Python.",
+        "How do you handle exceptions using try-except blocks in Python?",
+        "What are Python's built-in data types and when do you use each?",
+        "How do you read from and write to files in Python?"
+      ],
+      'Intermediate': [
+        "Explain list comprehensions and when they're more efficient than regular loops.",
+        "What are Python decorators and how do you create custom ones?",
+        "How does Python's memory management and garbage collection work?",
+        "What's the difference between shallow copy and deep copy?",
+        "Explain generators, yield keyword, and their memory advantages."
+      ],
+      'Advanced': [
+        "What techniques do you use to optimize Python code performance?",
+        "Explain metaclasses and provide a practical use case.",
+        "How do you structure and test large Python applications?",
+        "What's your approach to handling concurrency in Python applications?",
+        "How do you design scalable REST APIs using Python frameworks?"
+      ]
+    },
+    'manual testing': {
+      'Beginner': [
+        "What is manual testing and how does it differ from automated testing?",
+        "Walk me through the basic manual testing process from start to finish.",
+        "What are test cases and what key elements should they contain?",
+        "Explain the difference between verification and validation in testing.",
+        "What are the main types of manual testing you're familiar with?"
+      ],
+      'Intermediate': [
+        "How do you prioritize test cases when working with tight deadlines?",
+        "What testing techniques do you use to ensure comprehensive coverage?",
+        "How do you adapt your testing approach for Agile development cycles?",
+        "Describe your process for exploratory testing and finding edge cases.",
+        "How do you maintain traceability between requirements and test execution?"
+      ],
+      'Advanced': [
+        "How do you design a comprehensive test strategy for complex applications?",
+        "Explain your approach to risk-based testing and resource allocation.",
+        "How do you mentor junior testers and establish testing best practices?",
+        "What's your strategy for balancing manual testing with test automation?",
+        "What metrics and KPIs do you use to measure testing effectiveness?"
       ]
     }
   };
 
-  function addMessage(text, sender, isTimer = false, isNote = false) {
+  function addMessage(text, sender, isTimer = false, isDebug = false) {
     const div = document.createElement('div');
-    div.className = 'message ' + sender + (isTimer ? ' timer-msg' : '') + (isNote ? ' interviewer-note' : '');
+    let className = 'message ' + sender;
+    if (isTimer) className += ' timer-msg';
+    if (isDebug) className += ' debug-info';
     
-    if (isTimer || isNote) {
-      div.textContent = text;
-    } else {
-      div.innerHTML = text.replace(/\n/g, '<br>');
-    }
+    div.className = className;
+    div.innerHTML = text.replace(/\n/g, '<br>');
     
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   }
 
   function updateQuestionCounter() {
-    if (interviewStarted && questionIndex > 0) {
+    if (timerStarted && questionIndex > 0) {
       questionCounter.style.display = 'block';
-      topicIndicator.style.display = 'block';
       currentQuestionSpan.textContent = questionIndex;
       
-      const topic = topicMap[questionIndex] || "General Discussion";
-      currentTopicSpan.textContent = topic;
+      const topics = {
+        1: "Fundamentals",
+        2: "Concepts", 
+        3: "Applications",
+        4: "Best Practices",
+        5: "Advanced Topics",
+        6: "Problem Solving"
+      };
       
-      if (!topicsDiscussed.includes(topic)) {
-        topicsDiscussed.push(topic);
-      }
+      currentTopicSpan.textContent = topics[questionIndex] || "Discussion";
     }
   }
 
-  function updateStatus(status) {
-    statusIndicator.textContent = status;
-    statusIndicator.style.display = 'block';
-    if (status.includes('Ended')) {
-      statusIndicator.className = 'status-indicator status-ended';
-    } else {
-      statusIndicator.className = 'status-indicator status-active';
-    }
-  }
-
-  function assessAnswerQuality(answer) {
-    const lowQualityIndicators = ['no idea', 'dont know', 'cant answer', 'no', 'idk', 'dunno'];
-    const trimmedAnswer = answer.toLowerCase().trim();
+  function getRandomQuestion() {
+    const skillLower = skill.toLowerCase();
+    const skillQuestions = questionBanks[skillLower];
     
-    if (trimmedAnswer.length < 5) return 'very_weak';
-    
-    const hasLowQualityIndicator = lowQualityIndicators.some(indicator => 
-      trimmedAnswer.includes(indicator)
-    );
-    
-    if (hasLowQualityIndicator) return 'weak';
-    if (trimmedAnswer.length < 20) return 'basic';
-    return 'good';
-  }
-
-  function generateFallbackQuestion() {
-    const skillQuestions = questionBanks[skill.toLowerCase()];
     if (skillQuestions && skillQuestions[level]) {
       const questionPool = skillQuestions[level];
-      const randomIndex = Math.floor(Math.random() * questionPool.length);
-      return questionPool[randomIndex];
+      const usedQuestions = window.usedQuestions || [];
+      
+      // Filter out already used questions
+      const availableQuestions = questionPool.filter((q, index) => !usedQuestions.includes(index));
+      
+      if (availableQuestions.length === 0) {
+        // If all questions used, reset and use any question
+        window.usedQuestions = [];
+        const randomIndex = Math.floor(Math.random() * questionPool.length);
+        window.usedQuestions.push(randomIndex);
+        return questionPool[randomIndex];
+      }
+      
+      const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+      const selectedQuestion = availableQuestions[randomIndex];
+      const originalIndex = questionPool.indexOf(selectedQuestion);
+      
+      if (!window.usedQuestions) window.usedQuestions = [];
+      window.usedQuestions.push(originalIndex);
+      
+      return selectedQuestion;
     }
+    
     // Generic fallback
-    return `Can you tell me about your experience with ${skill}?`;
+    const genericQuestions = {
+      'Beginner': `What are the fundamental concepts of ${skill} that every beginner should know?`,
+      'Intermediate': `How do you apply ${skill} in real projects and what challenges have you faced?`,
+      'Advanced': `What advanced techniques and best practices do you follow when working with ${skill}?`
+    };
+    
+    return genericQuestions[level] || `Tell me about your experience with ${skill}.`;
   }
 
-  function generateContextualPrompt(userMessage, answerQuality) {
-    const topic = topicMap[questionIndex] || "General";
+  function getContextualFollowUp(userAnswer) {
+    const answerLength = userAnswer.trim().length;
     
-    // This function is now mainly for fallback - the main prompting is handled by n8n
-    let prompt = `You are an experienced ${skill} interviewer talking to ${name}, an ${level} level candidate.
-
-CONTEXT:
-- Current question: ${questionIndex}
-- Current topic: ${topic}
-- Previous answer quality: ${answerQuality}
-- Previous answer: "${userMessage}"
-
-INSTRUCTIONS:
-1. Act like a real interviewer - be conversational and encouraging
-2. Give brief, specific feedback on their previous answer
-3. ${answerQuality === 'weak' || answerQuality === 'very_weak' ? 
-      'Since they struggled, offer help or ask a simpler related question' : 
-      'Build on their answer with a follow-up question'}
-4. Keep questions focused on ${skill} for ${level} level
-5. Ask ONE clear question only
-
-RESPONSE FORMAT:
-[Brief feedback on previous answer] [One specific follow-up question]
-
-Example: "Good explanation of the basics! Now, can you tell me about a specific testing scenario you've encountered?"`;
-
-    return prompt;
+    // Assess answer quality
+    const isWeakAnswer = answerLength < 15 || 
+                        userAnswer.toLowerCase().includes('dont know') ||
+                        userAnswer.toLowerCase().includes('no idea') ||
+                        userAnswer.toLowerCase().includes('not sure') ||
+                        userAnswer.toLowerCase() === 'yes' ||
+                        userAnswer.toLowerCase() === 'no' ||
+                        userAnswer.toLowerCase() === 'okay' ||
+                        userAnswer.toLowerCase() === 'ok';
+    
+    if (isWeakAnswer) {
+      const encouragements = [
+        "No problem! Let me ask something more specific.",
+        "That's okay! Here's a different question to help you show your knowledge.",
+        "Let's try a more targeted question."
+      ];
+      const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+      setTimeout(() => addMessage(randomEncouragement, "ai"), 500);
+    } else {
+      const feedbacks = ["Good point!", "I see!", "Interesting!", "That's helpful!", "Good explanation!"];
+      const randomFeedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+      setTimeout(() => addMessage(`${randomFeedback} Let me ask about another aspect.`, "ai"), 500);
+    }
+    
+    return getRandomQuestion();
   }
 
   function disableInput() {
     input.disabled = true;
     sendBtn.disabled = true;
-    sendBtn.textContent = "Interview Ended";
+    sendBtn.textContent = "Ended";
     sendBtn.classList.add('disabled');
     input.classList.add('disabled');
-    input.placeholder = "Interview has ended - Thank you for participating!";
-    updateStatus('Interview Ended');
+    input.placeholder = "Interview completed";
   }
 
   function startInterviewTimer() {
     if (timerStarted) return;
     
     timerStarted = true;
-    interviewStarted = true;
     interviewStartTime = Date.now();
     
-    updateStatus('Interview Active');
-    updateQuestionCounter();
-    
-    addMessage("⏰ Let's start your technical interview! You have 3 minutes to demonstrate your expertise.", "ai", true);
-    addMessage("🚀 Your time starts now - Good luck!", "ai", true);
+    addMessage("⏱️ Your 3-minute interview starts now!", "ai", true);
     
     const timerElement = document.getElementById('timer');
     timerElement.style.display = 'block';
@@ -444,62 +494,30 @@ Example: "Good explanation of the basics! Now, can you tell me about a specific 
       const remaining = getRemainingTime();
       const minutes = Math.floor(remaining / 60);
       const seconds = remaining % 60;
-      timerElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+      timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
       
       if (remaining === 30) {
-        addMessage("⚠️ 30 seconds remaining! Wrap up your current answer.", "ai", true);
-        timerElement.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        addMessage("⚠️ 30 seconds left!", "ai", true);
       }
       
       if (remaining <= 0) {
         clearInterval(timerInterval);
-        timerElement.textContent = 'Time: 0:00';
         endInterview();
       }
     }, 1000);
-    
-    interviewTimer = setTimeout(() => {
-      clearInterval(timerInterval);
-      endInterview();
-    }, 180000);
   }
 
   function endInterview() {
     if (interviewEnded) return;
     
     interviewEnded = true;
-    addMessage("⏰ Time's up! Interview completed. Thank you for participating!", "ai", true);
-    addMessage(`📊 Interview Summary: ${totalQuestionsAsked} questions asked across ${topicsDiscussed.length} topics: ${topicsDiscussed.join(', ')}.`, "ai");
+    addMessage("⏰ Time's up! Interview completed.", "ai", true);
+    addMessage(`📊 Questions answered: ${totalQuestionsAsked}`, "ai");
     disableInput();
     
     const timerElement = document.getElementById('timer');
-    timerElement.style.background = '#6b7280';
-    
-    sendCompletionStatus();
-  }
-
-  async function sendCompletionStatus() {
-    try {
-      const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
-      await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sessionId: sessionId,
-          name: name,
-          email: email, 
-          skill: skill,
-          level: level,
-          userMessage: "INTERVIEW_COMPLETED",
-          questionIndex: questionIndex,
-          step: 'completed',
-          totalQuestions: totalQuestionsAsked,
-          topics: topicsDiscussed.join(', ')
-        }),
-      });
-    } catch (err) {
-      console.error('Error sending completion status:', err);
-    }
+    timerElement.style.background = '#4a4a4a';
+    timerElement.textContent = 'Done';
   }
 
   function getRemainingTime() {
@@ -508,179 +526,112 @@ Example: "Good explanation of the basics! Now, can you tell me about a specific 
     return Math.max(0, 180 - elapsed);
   }
 
-  function checkTimeRemaining() {
-    const remaining = getRemainingTime();
-    if (remaining <= 0 || interviewEnded) {
-      if (!interviewEnded) {
-        endInterview();
-      }
-      return false;
-    }
-    return true;
-  }
-
   function isValidEmail(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-    return regex.test(email);
-  }
-
-  function isValidSkill(skill) {
-    const trimmedSkill = skill.trim().toLowerCase();
-    const hasLetters = /[a-zA-Z]/.test(trimmedSkill);
-    const isReasonableLength = trimmedSkill.length >= 2 && trimmedSkill.length <= 50;
-    const isNotJustNumbers = !/^\d+$/.test(trimmedSkill);
-    const isNotJustSpecialChars = !/^[^a-zA-Z0-9]+$/.test(trimmedSkill);
-    
-    return hasLetters && isReasonableLength && isNotJustNumbers && isNotJustSpecialChars;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email);
   }
 
   async function sendMessage() {
     const message = input.value.trim();
-    if (!message) return;
-
-    if (interviewEnded) {
-      addMessage("Interview has already ended. Thank you for participating!", "ai");
-      return;
-    }
-
-    if (step === 4 && !checkTimeRemaining()) {
-      return;
-    }
+    if (!message || interviewEnded) return;
 
     addMessage(message, 'user');
     input.value = '';
     input.disabled = true;
     sendBtn.disabled = true;
-    sendBtn.textContent = 'Processing...';
+    sendBtn.textContent = '...';
 
     if (step === 0) {
       name = message;
       step++;
       setTimeout(() => {
-        addMessage(`Nice to meet you, ${name}! 👋 Now please enter your *Email ID*.`, "ai");
+        addMessage(`Hi ${name}! 👋 What's your email?`, "ai");
         enableInput();
-      }, 500);
-    } else if (step === 1) {
+      }, 600);
+    } 
+    else if (step === 1) {
       if (!isValidEmail(message)) {
-        addMessage("⚠️ That doesn't look like a valid email. Please enter a valid one like `yourname@email.com`.", "ai");
+        addMessage("Please enter a valid email.", "ai");
         enableInput();
         return;
       }
       email = message;
       step++;
       setTimeout(() => {
-        addMessage("Perfect! ✨ Now tell me the *Skill* you want to be interviewed on (e.g., any programming language, technology, framework, methodology, or technical domain).", "ai");
+        addMessage("Great! What skill should I interview you on?", "ai");
         enableInput();
-      }, 500);
-    } else if (step === 2) {
+      }, 600);
+    } 
+    else if (step === 2) {
       skill = message.trim();
-      if (skill.length < 2 || !isValidSkill(skill)) {
-        addMessage("❌ Please enter a valid technical skill. This can be any programming language, technology, framework, tool, or methodology you'd like to be assessed on.", "ai");
+      if (skill.length < 2) {
+        addMessage("Please enter a valid technical skill.", "ai");
         enableInput();
         return;
       }
       step++;
       setTimeout(() => {
-        addMessage(`Excellent choice! 🎯 You selected *${skill}*. Now please choose your experience level:`, "ai");
+        addMessage(`Perfect! Choose your ${skill} level:`, "ai");
         showLevelOptions();
-      }, 500);
+      }, 600);
       return;
-    } else if (step === 4) {
-      if (interviewEnded) {
-        enableInput();
+    } 
+    else if (step === 4) {
+      if (getRemainingTime() <= 0) {
+        endInterview();
         return;
       }
 
+      totalQuestionsAsked++;
+      
+      // Try webhook first, then fallback
       try {
-        totalQuestionsAsked++;
-        const answerQuality = assessAnswerQuality(message);
-        updateQuestionCounter();
-
-        // Create a more intelligent prompt
-        const intelligentPrompt = generateContextualPrompt(message, answerQuality);
-
-        const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
-        const requestBody = { 
-          sessionId: sessionId,
-          name: name,
-          email: email, 
-          skill: skill,
-          level: level,
-          userMessage: message,
-          questionIndex: questionIndex,
-          step: 'ongoing_interview',
-          currentTopic: topicMap[questionIndex] || "General",
-          answerQuality: answerQuality,
-          customPrompt: intelligentPrompt
-        };
-
-        const response = await fetch(webhookUrl, {
+        const response = await fetch('https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({ 
+            sessionId: sessionId,
+            name: name,
+            email: email, 
+            skill: skill,
+            level: level,
+            userMessage: message,
+            questionIndex: questionIndex + 1,
+            step: questionIndex === 0 ? 'start_interview' : 'ongoing_interview'
+          }),
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseText = await response.text();
-        
-        if (!responseText.trim()) {
-          throw new Error('Empty response from server');
-        }
-
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          throw new Error('Invalid JSON response from server');
-        }
-
-        let aiReply = 'Let me ask you another question...';
-        
-        if (data && typeof data === 'object') {
-          if (data.reply && typeof data.reply === 'string') {
-            aiReply = data.reply;
-          } else if (typeof data === 'string' && data.length > 10) {
-            aiReply = data;
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.reply?.trim()?.length > 15) {
+            setTimeout(() => {
+              addMessage(data.reply, 'ai');
+              questionIndex++;
+              updateQuestionCounter();
+            }, 800);
+            enableInput();
+            return;
           }
         }
-        
-        if (!interviewEnded) {
-          setTimeout(() => {
-            addMessage(aiReply, 'ai');
-            questionIndex++;
-            updateQuestionCounter();
-          }, 800);
-        }
-
       } catch (err) {
-        console.error('Request error:', err);
-        if (!interviewEnded) {
-          const answerQuality = assessAnswerQuality(message);
-          
-          if (answerQuality === 'weak' || answerQuality === 'very_weak') {
-            addMessage("That's okay! Let me help you with a simpler question.", "ai", false, true);
-          } else {
-            addMessage("Good! Let me ask you about another aspect.", "ai", false, true);
-          }
-          
-          setTimeout(() => {
-            const fallbackQuestion = generateFallbackQuestion();
-            addMessage(fallbackQuestion, 'ai');
-            questionIndex++;
-            updateQuestionCounter();
-          }, 1000);
-        }
+        addMessage("🔧 Using offline mode", "ai", false, true);
       }
+
+      // Local fallback
+      setTimeout(() => {
+        const nextQuestion = getContextualFollowUp(message);
+        setTimeout(() => {
+          addMessage(nextQuestion, 'ai');
+          questionIndex++;
+          updateQuestionCounter();
+        }, 800);
+      }, 600);
     }
 
     enableInput();
   }
 
   function enableInput() {
-    if (!interviewEnded) {
+    if (!interviewEnded && getRemainingTime() > 0) {
       input.disabled = false;
       sendBtn.disabled = false;
       sendBtn.textContent = 'Send';
@@ -690,10 +641,10 @@ Example: "Good explanation of the basics! Now, can you tell me about a specific 
 
   function showLevelOptions() {
     inputArea.innerHTML = `
-      <div style="display: flex; flex-wrap: wrap; justify-content: center; width: 100%;">
-        <button class="btn-level" onclick="selectLevel('Beginner')">🌱 Beginner (0-2 years)</button>
-        <button class="btn-level" onclick="selectLevel('Intermediate')">🚀 Intermediate (2-5 years)</button>
-        <button class="btn-level" onclick="selectLevel('Advanced')">⭐ Advanced (5+ years)</button>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; width: 100%; gap: 5px;">
+        <button class="btn-level" onclick="selectLevel('Beginner')">Beginner</button>
+        <button class="btn-level" onclick="selectLevel('Intermediate')">Intermediate</button>
+        <button class="btn-level" onclick="selectLevel('Advanced')">Advanced</button>
       </div>
     `;
   }
@@ -702,154 +653,56 @@ Example: "Good explanation of the basics! Now, can you tell me about a specific 
     level = selected;
     step = 4;
     addMessage(selected, 'user');
-    addMessage("✅ Perfect! Setting up your personalized interview...", "ai");
+    addMessage("Setting up your interview...", "ai");
 
-    try {
-      const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
-      const improvedPrompt = `You are an expert ${skill} interviewer conducting a ${level} level technical interview with ${name}.
-
-FIRST QUESTION: Ask one foundational ${skill} question appropriate for ${level} level.
-
-LEVEL GUIDELINES:
-- Beginner: Basic concepts, definitions, simple scenarios
-- Intermediate: Practical applications, tools, real-world examples  
-- Advanced: Strategy, complex scenarios, best practices, leadership
-
-Be conversational and encouraging. Ask ONE clear question only.
-
-Start now with: "Great! Let's begin with a fundamental question about ${skill}..."`;
-
-      const requestBody = { 
-        sessionId: sessionId,
-        name: name, 
-        email: email, 
-        skill: skill, 
-        level: level,
-        userMessage: "",
-        questionIndex: 1,
-        step: 'start_interview',
-        customPrompt: improvedPrompt
-      };
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // Restore input
+    inputArea.innerHTML = `
+      <textarea id="input" placeholder="Type your answer..." autocomplete="off" rows="1"></textarea>
+      <button id="sendBtn">Send</button>
+    `;
+    
+    input = document.getElementById('input');
+    sendBtn = document.getElementById('sendBtn');
+    
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
       }
+    });
+    
+    sendBtn.onclick = sendMessage;
 
-      const responseText = await response.text();
-      
-      if (!responseText.trim()) {
-        throw new Error('Empty response from server');
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        throw new Error('Invalid JSON response from server');
-      }
-
-      let aiReply = `Great! Let's begin with a fundamental question about ${skill}...`;
-      
-      if (data && typeof data === 'object') {
-        if (data.reply && typeof data.reply === 'string') {
-          aiReply = data.reply;
-        } else if (typeof data === 'string' && data.length > 10) {
-          aiReply = data;
-        }
-      }
-      
-      if (!interviewEnded) {
-        startInterviewTimer();
-        
-        setTimeout(() => {
-          addMessage(aiReply, 'ai');
-          questionIndex = 1;
-          updateQuestionCounter();
-        }, 1000);
-      }
-
-    } catch (err) {
-      console.error('Level selection error:', err);
-      addMessage('⚠️ Connection issue, but let\'s proceed with your interview!', 'ai');
-      
-      // Level-specific fallback questions
-      const getFirstQuestion = () => {
-        if (skill.toLowerCase().includes('manual testing') || skill.toLowerCase().includes('testing')) {
-          if (level === 'Beginner') {
-            return "Let's start with the basics - What is manual testing and how is it different from automated testing?";
-          } else if (level === 'Intermediate') {
-            return "Great! Let's begin - How do you approach test case design and prioritization in your projects?";
-          } else {
-            return "Excellent! Let's start - How do you design a comprehensive test strategy for complex applications?";
-          }
-        } else {
-          if (level === 'Beginner') {
-            return `Let's start with the fundamentals - Can you explain what ${skill} is and its main purpose?`;
-          } else if (level === 'Intermediate') {
-            return `Great! Let's begin - How do you apply ${skill} in real-world projects?`;
-          } else {
-            return `Excellent! Let's start - What advanced concepts and best practices do you follow in ${skill}?`;
-          }
-        }
-      };
-      
-      const firstQuestion = getFirstQuestion();
-      
-      startInterviewTimer();
-      
-      setTimeout(() => {
-        addMessage(firstQuestion, 'ai');
-        questionIndex = 1;
-        updateQuestionCounter();
-      }, 1000);
-    } finally {
-      // Restore input area
-      inputArea.innerHTML = `
-        <textarea id="input" placeholder="Type your answer here... (Press Shift+Enter for new line, Enter to send)" autocomplete="off" rows="2"></textarea>
-        <button id="sendBtn">Send</button>
-      `;
-      
-      // Reattach events
-      input = document.getElementById('input');
-      sendBtn = document.getElementById('sendBtn');
-      
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !interviewEnded) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-      
-      sendBtn.onclick = () => {
-        if (!interviewEnded) sendMessage();
-      };
-      
-      if (!interviewEnded) input.focus();
-    }
+    startInterviewTimer();
+    
+    setTimeout(() => {
+      const firstQuestion = getRandomQuestion();
+      addMessage(firstQuestion, 'ai');
+      questionIndex = 1;
+      updateQuestionCounter();
+      enableInput();
+    }, 1200);
   }
 
-  // Initial event listeners
-  sendBtn.onclick = () => {
-    if (!interviewEnded) sendMessage();
-  };
-  
+  // Initialize
+  sendBtn.onclick = sendMessage;
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && !interviewEnded) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   });
 
+  // Auto-resize textarea
+  input.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+  });
+
   // Welcome message
-  addMessage("Hi there! 👋 Welcome to Interview IQ Hub - Your AI Technical Interview Platform.", "ai");
+  addMessage("Welcome to AI Interview Hub! 👋", "ai");
   setTimeout(() => {
-    addMessage("I'll be conducting a comprehensive 3-minute technical interview to assess your skills. Let's start with your *Name*.", "ai");
+    addMessage("I'll interview you for 3 minutes. Let's start with your name.", "ai");
   }, 1000);
 </script>
 
