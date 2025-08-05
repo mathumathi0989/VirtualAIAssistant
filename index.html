@@ -309,11 +309,6 @@
     addMessage(selected, 'user');
     addMessage("✅ All set! Submitting your interview preferences...", "ai");
 
-    // Start timer immediately after level selection
-    setTimeout(() => {
-      startInterviewTimer();
-    }, 1000);
-
     try {
       const webhookUrl = 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview';
 
@@ -369,8 +364,15 @@
           aiReply = "Error parsing AI response: " + JSON.stringify(data);
         }
         
-        addMessage(aiReply, 'ai');
-        questionIndex = 1;
+        if (!interviewEnded) {
+          addMessage(aiReply, 'ai');
+          questionIndex = 1;
+          
+          // Start timer AFTER first question is displayed
+          setTimeout(() => {
+            startInterviewTimer();
+          }, 500);
+        }
       }
     } catch (err) {
       addMessage('Error: ' + err.message, 'ai');
