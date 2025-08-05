@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Interview Chat - Enhanced</title>
+  <title>AI Interview Hub - Enhanced</title>
   <style>
     * {
       margin: 0;
@@ -82,7 +82,7 @@
       font-weight: 500;
     }
     
-    .form-group input {
+    .form-group input, .form-group textarea {
       width: 100%;
       padding: 12px 15px;
       font-size: 1.1em;
@@ -92,18 +92,24 @@
       color: white;
       outline: none;
       transition: all 0.3s ease;
+      font-family: inherit;
     }
     
-    .form-group input::placeholder {
+    .form-group input::placeholder, .form-group textarea::placeholder {
       color: rgba(255, 255, 255, 0.5);
     }
     
-    .form-group input:focus {
+    .form-group input:focus, .form-group textarea:focus {
       border-color: rgba(255, 255, 255, 0.6);
       background: rgba(255, 255, 255, 0.15);
     }
     
-    .auth-btn {
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    .auth-btn, .primary-btn {
       width: 100%;
       padding: 15px;
       background: linear-gradient(135deg, #ffffff, #e5e5e5);
@@ -117,7 +123,7 @@
       margin-bottom: 15px;
     }
     
-    .auth-btn:hover {
+    .auth-btn:hover, .primary-btn:hover {
       background: linear-gradient(135deg, #f0f0f0, #d0d0d0);
       transform: translateY(-1px);
     }
@@ -158,6 +164,182 @@
       margin-bottom: 15px;
       text-align: center;
       font-size: 0.9em;
+    }
+    
+    /* Interview Options Styles */
+    .interview-options {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .welcome-section {
+      text-align: center;
+      margin-bottom: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .welcome-section h3 {
+      color: #6BD6A8;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+    
+    .welcome-section p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1em;
+    }
+    
+    .option-cards {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    
+    .option-card {
+      flex: 1;
+      min-width: 280px;
+      padding: 30px;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      text-align: center;
+    }
+    
+    .skill-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .resume-card {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .option-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .option-card h4 {
+      font-size: 1.5em;
+      margin-bottom: 15px;
+      color: white;
+    }
+    
+    .option-card p {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1em;
+      line-height: 1.5;
+    }
+    
+    /* Resume Upload Styles */
+    .resume-container, .skill-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .upload-section {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 20px;
+    }
+    
+    .file-upload-area {
+      border: 2px dashed rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+    
+    .file-upload-area:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .file-upload-area.dragover {
+      border-color: #6BD6A8;
+      background: rgba(107, 214, 168, 0.1);
+    }
+    
+    .upload-icon {
+      font-size: 3em;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 15px;
+    }
+    
+    .upload-text {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1em;
+      margin-bottom: 15px;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .choose-file-btn {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .choose-file-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+    }
+    
+    .file-info {
+      background: rgba(72, 187, 120, 0.2);
+      color: #48bb78;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(72, 187, 120, 0.3);
+      margin-top: 15px;
+      display: none;
+      font-size: 0.9em;
+    }
+    
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
     
     /* Interview Chat Styles */
@@ -391,7 +573,7 @@
     }
 
     /* Mobile responsiveness */
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       body {
         max-width: 100%;
       }
@@ -406,8 +588,17 @@
         font-size: 1.8em;
       }
       
-      .auth-form {
+      .auth-form, .upload-section {
         padding: 20px;
+      }
+      
+      .option-cards {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .option-card {
+        min-width: 100%;
       }
       
       .message {
@@ -434,6 +625,7 @@
 
 <div class="container">
   <button class="logout-btn" id="logoutBtn" style="display: none;" onclick="logout()">Logout</button>
+  <button class="back-btn" id="backBtn" style="display: none;" onclick="goBack()">← Back</button>
   
   <!-- Authentication Container -->
   <div class="auth-container" id="authContainer">
@@ -453,6 +645,8 @@
       </div>
       <button class="auth-btn" onclick="login()">Login</button>
       <div class="auth-switch">
+        <a onclick="showForgotPassword()">Forgot Password?</a>
+        <br><br>
         Don't have an account? <a onclick="showSignup()">Sign up here</a>
       </div>
     </div>
@@ -478,6 +672,97 @@
         Already have an account? <a onclick="showLogin()">Login here</a>
       </div>
     </div>
+    
+    <!-- Forgot Password Form -->
+    <div class="auth-form" id="forgotPasswordForm" style="display: none;">
+      <h3>Reset Password</h3>
+      <div id="forgotMessage"></div>
+      <div class="form-group">
+        <label for="forgotEmail">Email</label>
+        <input type="email" id="forgotEmail" placeholder="Enter your email address" required>
+      </div>
+      <button class="auth-btn" onclick="sendResetLink()">Send Reset Link</button>
+      <div class="auth-switch">
+        Remember your password? <a onclick="showLogin()">Login here</a>
+      </div>
+    </div>
+    
+    <!-- Reset Password Form -->
+    <div class="auth-form" id="resetPasswordForm" style="display: none;">
+      <h3>Set New Password</h3>
+      <div id="resetMessage"></div>
+      <div class="form-group">
+        <label for="resetCode">Reset Code</label>
+        <input type="text" id="resetCode" placeholder="Enter the code from your email" required>
+      </div>
+      <div class="form-group">
+        <label for="newPassword">New Password</label>
+        <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)" required>
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" placeholder="Confirm your new password" required>
+      </div>
+      <button class="auth-btn" onclick="resetPassword()">Reset Password</button>
+      <div class="auth-switch">
+        <a onclick="showLogin()">Back to Login</a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Interview Options Container -->
+  <div class="interview-options" id="interviewOptions">
+    <h2>🎯 AI Interview Hub</h2>
+    <div class="welcome-section">
+      <h3>InterviewIQ Hub</h3>
+      <p>Ready to Start the Interview?</p>
+    </div>
+    <div class="option-cards">
+      <div class="option-card skill-card" onclick="selectInterviewType('skill')">
+        <h4>Skill-Based Interview</h4>
+        <p>Choose your skill and level of expertise</p>
+      </div>
+      <div class="option-card resume-card" onclick="selectInterviewType('resume')">
+        <h4>Resume-Based Interview</h4>
+        <p>Upload your resume and job description</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Resume Upload Container -->
+  <div class="resume-container" id="resumeContainer">
+    <h2>📄 Resume-Based Interview</h2>
+    <div class="upload-section">
+      <div class="form-group">
+        <label>Resume *</label>
+        <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('resumeFile').click()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text">Click to upload your resume</div>
+          <button type="button" class="choose-file-btn">Choose File</button>
+          <input type="file" id="resumeFile" class="file-input" accept=".pdf,.doc,.docx" onchange="handleFileUpload(this)">
+        </div>
+        <div class="file-info" id="fileInfo"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="jobDescription">Job Description (Optional)</label>
+        <textarea id="jobDescription" placeholder="Paste the job description here..." rows="5"></textarea>
+      </div>
+      
+      <button class="primary-btn" onclick="startResumeInterview()">Continue to Interview Options</button>
+    </div>
+  </div>
+  
+  <!-- Skill Selection Container -->
+  <div class="skill-container" id="skillContainer">
+    <h2>💻 Skill-Based Interview</h2>
+    <div class="upload-section">
+      <div class="form-group">
+        <label for="skillInput">What skill should I interview you on?</label>
+        <input type="text" id="skillInput" placeholder="e.g., Java, Python, SQL, Manual Testing, etc." required>
+      </div>
+      <button class="primary-btn" onclick="proceedToSkillLevel()">Continue</button>
+    </div>
   </div>
   
   <!-- Interview Container -->
@@ -499,7 +784,8 @@
 <script>
   // Authentication state
   let currentUser = null;
-  let users = JSON.parse(window.localStorage?.getItem('interviewUsers') || '{}') || {};
+  let users = {};
+  let resetCodes = {}; // Store reset codes temporarily
   
   // Interview state
   const chat = document.getElementById('chat');
@@ -513,11 +799,14 @@
   let step = 0;
   let skill = '';
   let level = '';
+  let interviewType = '';
+  let resumeFile = null;
+  let jobDescription = '';
   let interviewStartTime = null;
   let interviewEnded = false;
   let timerStarted = false;
   
-  let sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+  let sessionId = '';
   let questionIndex = 0;
   let totalQuestionsAsked = 0;
 
@@ -617,6 +906,11 @@
     }
   };
 
+  // Generate consistent session ID for user
+  function generateSessionId(email) {
+    return hashPassword(email + 'session-salt').then(hash => 'session-' + hash.substring(0, 16));
+  }
+
   // Authentication Functions
   function showMessage(elementId, message, type = 'error') {
     const element = document.getElementById(elementId);
@@ -630,17 +924,157 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email);
   }
 
+  // Hash password function
+  async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  // Verify password function
+  async function verifyPassword(enteredPassword, storedHashedPassword) {
+    const hashedEnteredPassword = await hashPassword(enteredPassword);
+    return hashedEnteredPassword === storedHashedPassword;
+  }
+
+  // Generate random reset code
+  function generateResetCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  // Simulate sending email (in production, this would call your email service)
+  function simulateEmailSend(email, resetCode) {
+    console.log(`📧 Email sent to ${email}`);
+    console.log(`Reset Code: ${resetCode}`);
+    console.log(`This would normally be sent via email service like SendGrid, AWS SES, etc.`);
+    return true;
+  }
+
   function showLogin() {
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('forgotPasswordForm').style.display = 'none';
+    document.getElementById('resetPasswordForm').style.display = 'none';
   }
 
   function showSignup() {
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('signupForm').style.display = 'block';
+    document.getElementById('forgotPasswordForm').style.display = 'none';
+    document.getElementById('resetPasswordForm').style.display = 'none';
   }
 
-  function signup() {
+  function showForgotPassword() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('forgotPasswordForm').style.display = 'block';
+    document.getElementById('resetPasswordForm').style.display = 'none';
+  }
+
+  function showResetPassword() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('forgotPasswordForm').style.display = 'none';
+    document.getElementById('resetPasswordForm').style.display = 'block';
+  }
+
+  async function sendResetLink() {
+    const email = document.getElementById('forgotEmail').value.trim();
+
+    if (!isValidEmail(email)) {
+      showMessage('forgotMessage', 'Please enter a valid email address');
+      return;
+    }
+
+    const user = users[email];
+    if (!user) {
+      showMessage('forgotMessage', 'No account found with this email address');
+      return;
+    }
+
+    // Generate reset code
+    const resetCode = generateResetCode();
+    resetCodes[email] = {
+      code: resetCode,
+      expires: Date.now() + 15 * 60 * 1000, // 15 minutes
+      email: email
+    };
+
+    // Simulate sending email
+    const emailSent = simulateEmailSend(email, resetCode);
+    
+    if (emailSent) {
+      showMessage('forgotMessage', 
+        `Reset code sent to ${email}! Check your email and use the code below. (For demo: ${resetCode})`, 
+        'success'
+      );
+      
+      setTimeout(() => {
+        showResetPassword();
+      }, 2000);
+    } else {
+      showMessage('forgotMessage', 'Failed to send reset email. Please try again.');
+    }
+  }
+
+  async function resetPassword() {
+    const resetCode = document.getElementById('resetCode').value.trim();
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (!resetCode) {
+      showMessage('resetMessage', 'Please enter the reset code');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showMessage('resetMessage', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showMessage('resetMessage', 'Passwords do not match');
+      return;
+    }
+
+    // Find matching reset code
+    let validEmail = null;
+    for (const email in resetCodes) {
+      const resetData = resetCodes[email];
+      if (resetData.code === resetCode && resetData.expires > Date.now()) {
+        validEmail = email;
+        break;
+      }
+    }
+
+    if (!validEmail) {
+      showMessage('resetMessage', 'Invalid or expired reset code');
+      return;
+    }
+
+    // Hash new password and update user
+    const hashedPassword = await hashPassword(newPassword);
+    users[validEmail].password = hashedPassword;
+
+    // Clean up reset code
+    delete resetCodes[validEmail];
+
+    showMessage('resetMessage', 'Password reset successful! Please login with your new password.', 'success');
+    
+    setTimeout(() => {
+      showLogin();
+      document.getElementById('loginEmail').value = validEmail;
+      // Clear reset form
+      document.getElementById('resetCode').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    }, 2000);
+  }
+
+  async function signup() {
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
@@ -665,22 +1099,16 @@
       return;
     }
 
-    // Create new user
+    // Hash the password before storing
+    const hashedPassword = await hashPassword(password);
+
+    // Create new user with hashed password
     users[email] = {
       name: name,
       email: email,
-      password: password,
+      password: hashedPassword,
       createdAt: new Date().toISOString()
     };
-
-    // Save to storage (in production, this would be handled server-side)
-    try {
-      if (window.localStorage) {
-        window.localStorage.setItem('interviewUsers', JSON.stringify(users));
-      }
-    } catch (e) {
-      console.log('Storage not available, using session data only');
-    }
 
     showMessage('signupMessage', 'Account created successfully! Please login.', 'success');
     
@@ -690,7 +1118,7 @@
     }, 1500);
   }
 
-  function login() {
+  async function login() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
 
@@ -705,21 +1133,36 @@
     }
 
     const user = users[email];
-    if (!user || user.password !== password) {
+    if (!user) {
       showMessage('loginMessage', 'Invalid email or password');
       return;
     }
 
+    // Verify password using hash comparison
+    const isPasswordCorrect = await verifyPassword(password, user.password);
+    if (!isPasswordCorrect) {
+      showMessage('loginMessage', 'Invalid email or password');
+      return;
+    }
+
+    // Generate consistent session ID for this user
+    sessionId = await generateSessionId(email);
+    console.log(`User ${email} session ID: ${sessionId}`);
+
     // Login successful
     currentUser = user;
-    showInterviewInterface();
+    showInterviewOptions();
   }
 
   function logout() {
     currentUser = null;
     document.getElementById('authContainer').style.display = 'flex';
+    document.getElementById('interviewOptions').style.display = 'none';
+    document.getElementById('resumeContainer').style.display = 'none';
+    document.getElementById('skillContainer').style.display = 'none';
     document.getElementById('interviewContainer').style.display = 'none';
     document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('backBtn').style.display = 'none';
     
     // Reset interview state
     resetInterview();
@@ -730,31 +1173,169 @@
     showLogin();
   }
 
-  function showInterviewInterface() {
+  function showInterviewOptions() {
     document.getElementById('authContainer').style.display = 'none';
-    document.getElementById('interviewContainer').style.display = 'flex';
+    document.getElementById('interviewOptions').style.display = 'flex';
     document.getElementById('logoutBtn').style.display = 'block';
+  }
+
+  function selectInterviewType(type) {
+    interviewType = type;
+    document.getElementById('interviewOptions').style.display = 'none';
+    document.getElementById('backBtn').style.display = 'block';
     
-    // Show user info
-    document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name}!`;
+    if (type === 'resume') {
+      document.getElementById('resumeContainer').style.display = 'flex';
+    } else if (type === 'skill') {
+      document.getElementById('skillContainer').style.display = 'flex';
+    }
+  }
+
+  function goBack() {
+    // Hide all containers
+    document.getElementById('resumeContainer').style.display = 'none';
+    document.getElementById('skillContainer').style.display = 'none';
+    document.getElementById('interviewContainer').style.display = 'none';
+    document.getElementById('backBtn').style.display = 'none';
     
-    // Start interview flow
-    startInterviewFlow();
+    // Show interview options
+    document.getElementById('interviewOptions').style.display = 'flex';
+    
+    // Reset any form data
+    resetInterview();
+  }
+
+  // File Upload Functions
+  function handleFileUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a PDF, DOC, or DOCX file.');
+      input.value = '';
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert('File size must be less than 5MB.');
+      input.value = '';
+      return;
+    }
+
+    resumeFile = file;
+    const fileInfo = document.getElementById('fileInfo');
+    fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    fileInfo.style.display = 'block';
+  }
+
+  // Drag and drop functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('fileUploadArea');
+    
+    if (uploadArea) {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+      });
+
+      function highlight(e) {
+        uploadArea.classList.add('dragover');
+      }
+
+      function unhighlight(e) {
+        uploadArea.classList.remove('dragover');
+      }
+
+      uploadArea.addEventListener('drop', handleDrop, false);
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          document.getElementById('resumeFile').files = files;
+          handleFileUpload(document.getElementById('resumeFile'));
+        }
+      }
+    }
+  });
+
+  function startResumeInterview() {
+    if (!resumeFile) {
+      alert('Please upload your resume first.');
+      return;
+    }
+
+    jobDescription = document.getElementById('jobDescription').value.trim();
+    
+    // Hide resume container and show interview container
+    document.getElementById('resumeContainer').style.display = 'none';
+    document.getElementById('interviewContainer').style.display = 'flex';
+    document.getElementById('backBtn').style.display = 'none';
+    
+    startResumeBasedInterview();
+  }
+
+  function proceedToSkillLevel() {
+    const skillInput = document.getElementById('skillInput').value.trim();
+    if (!skillInput) {
+      alert('Please enter a skill.');
+      return;
+    }
+    
+    skill = skillInput;
+    
+    // Hide skill container and show interview container
+    document.getElementById('skillContainer').style.display = 'none';
+    document.getElementById('interviewContainer').style.display = 'flex';
+    document.getElementById('backBtn').style.display = 'none';
+    
+    startSkillBasedInterview();
   }
 
   function resetInterview() {
     step = 0;
     skill = '';
     level = '';
+    interviewType = '';
+    resumeFile = null;
+    jobDescription = '';
     interviewStartTime = null;
     interviewEnded = false;
     timerStarted = false;
-    sessionId = 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
     questionIndex = 0;
     totalQuestionsAsked = 0;
     
+    // Clear file upload
+    const fileInput = document.getElementById('resumeFile');
+    if (fileInput) fileInput.value = '';
+    const fileInfo = document.getElementById('fileInfo');
+    if (fileInfo) fileInfo.style.display = 'none';
+    
+    // Clear job description
+    const jdInput = document.getElementById('jobDescription');
+    if (jdInput) jdInput.value = '';
+    
+    // Clear skill input
+    const skillInput = document.getElementById('skillInput');
+    if (skillInput) skillInput.value = '';
+    
     // Clear chat
-    chat.innerHTML = '';
+    if (chat) chat.innerHTML = '';
     
     // Reset timer
     const timerElement = document.getElementById('timer');
@@ -942,11 +1523,21 @@
     sendBtn.disabled = true;
     sendBtn.textContent = '...';
 
+    if (interviewType === 'skill') {
+      await handleSkillBasedMessage(message);
+    } else if (interviewType === 'resume') {
+      await handleResumeBasedMessage(message);
+    }
+
+    enableInput();
+  }
+
+  async function handleSkillBasedMessage(message) {
     if (step === 0) {
+      // This shouldn't happen for skill-based interviews as skill is already set
       skill = message.trim();
       if (skill.length < 2) {
         addMessage("Please enter a valid technical skill.", "ai");
-        enableInput();
         return;
       }
       step++;
@@ -990,7 +1581,6 @@
               questionIndex++;
               updateQuestionCounter();
             }, 800);
-            enableInput();
             return;
           }
         }
@@ -1008,8 +1598,37 @@
         }, 800);
       }, 600);
     }
+  }
 
-    enableInput();
+  async function handleResumeBasedMessage(message) {
+    if (getRemainingTime() <= 0) {
+      endInterview();
+      return;
+    }
+
+    totalQuestionsAsked++;
+    
+    // For resume-based interviews, we would typically send the resume content and job description
+    // to the AI service for analysis. For now, we'll use a generic approach.
+    
+    setTimeout(() => {
+      const genericResumeQuestions = [
+        "Tell me about a challenging project mentioned in your resume.",
+        "How do you stay updated with the latest technologies in your field?",
+        "Describe a situation where you had to work under tight deadlines.",
+        "What's your approach to problem-solving in your previous role?",
+        "How do you handle feedback and criticism from team members?",
+        "Tell me about a time you had to learn a new technology quickly."
+      ];
+      
+      const randomQuestion = genericResumeQuestions[Math.floor(Math.random() * genericResumeQuestions.length)];
+      
+      setTimeout(() => {
+        addMessage("Based on your resume, " + randomQuestion, 'ai');
+        questionIndex++;
+        updateQuestionCounter();
+      }, 800);
+    }, 600);
   }
 
   function enableInput() {
@@ -1066,12 +1685,40 @@
     }, 1200);
   }
 
-  function startInterviewFlow() {
+  function startSkillBasedInterview() {
     resetInterview();
+    interviewType = 'skill';
+    document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name}! Skill-based interview`;
+    
     addMessage(`Hello ${currentUser.name}! 👋`, "ai");
     setTimeout(() => {
-      addMessage("I'll interview you for 3 minutes. What skill should I interview you on?", "ai");
-      enableInput();
+      addMessage(`Great! I'll interview you on ${skill}. Choose your level:`, "ai");
+      showLevelOptions();
+      step = 1;
+    }, 1000);
+  }
+
+  function startResumeBasedInterview() {
+    resetInterview();
+    interviewType = 'resume';
+    document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name}! Resume-based interview`;
+    
+    addMessage(`Hello ${currentUser.name}! 👋`, "ai");
+    setTimeout(() => {
+      addMessage("I've analyzed your resume. Let's start with some questions based on your experience.", "ai");
+      addMessage("Ready to begin your 3-minute interview?", "ai");
+      
+      // Start timer immediately for resume-based interviews
+      startInterviewTimer();
+      
+      setTimeout(() => {
+        const firstQuestion = "Tell me about yourself and your professional background.";
+        addMessage(firstQuestion, 'ai');
+        questionIndex = 1;
+        updateQuestionCounter();
+        enableInput();
+        step = 2; // Set step to active interview mode
+      }, 2000);
     }, 1000);
   }
 
@@ -1098,11 +1745,47 @@
   document.addEventListener('DOMContentLoaded', function() {
     initializeInterviewListeners();
     
-    // Check for existing login (in a real app, you'd use proper session management)
-    const savedUser = null; // Disabled auto-login for security
-    if (savedUser && users[savedUser.email]) {
-      currentUser = users[savedUser.email];
-      showInterviewInterface();
+    // Initialize drag and drop for file upload
+    const uploadArea = document.getElementById('fileUploadArea');
+    
+    if (uploadArea) {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+      });
+
+      function highlight(e) {
+        uploadArea.classList.add('dragover');
+      }
+
+      function unhighlight(e) {
+        uploadArea.classList.remove('dragover');
+      }
+
+      uploadArea.addEventListener('drop', handleDrop, false);
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          const fileInput = document.getElementById('resumeFile');
+          fileInput.files = files;
+          handleFileUpload(fileInput);
+        }
+      }
     }
   });
 
