@@ -1512,37 +1512,30 @@ async function callAIInterviewer(userMessage, isFirstMessage = false) {
   }
 
   // FIXED SEND MESSAGE FUNCTION - Logs Q&A properly
-  async function sendMessage() {
-    const message = input.value.trim();
-    if (!message || interviewEnded) return;
+async function sendMessage() {
+  const message = input.value.trim();
+  if (!message || interviewEnded) return;
 
-    addMessage(message, 'user');
-    input.value = '';
-    input.disabled = true;
-    sendBtn.disabled = true;
-    sendBtn.textContent = '...';
+  console.log('👤 User response:', message);
 
-    if (getRemainingTime() <= 0) {
-      endInterview();
-      return;
-    }
+  addMessage(message, 'user');
+  input.value = '';
+  input.disabled = true;
+  sendBtn.disabled = true;
+  sendBtn.textContent = '...';
 
-    // FIXED: Log the CURRENT question that user just answered
-    if (currentAIQuestion) {
-      console.log('📝 User answered question:', currentAIQuestion.text);
-      console.log('👤 User response:', message);
-      
-      await logQuestionResponse(currentAIQuestion, message);
-      currentAIQuestion = null; // Clear after logging
-    }
-
-    totalQuestionsAsked++;
-    
-    // Get next question from AI
-    await callAIInterviewer(message, false);
-    
-    enableInput();
+  if (getRemainingTime() <= 0) {
+    endInterview();
+    return;
   }
+
+  totalQuestionsAsked++;
+  
+  // Send user response and get next question
+  await callAIInterviewer(message, false);
+  
+  enableInput();
+}
 
   // Start Interview Functions
   async function startSkillBasedInterview() {
