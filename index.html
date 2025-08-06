@@ -810,102 +810,6 @@
   let questionIndex = 0;
   let totalQuestionsAsked = 0;
 
-  // Enhanced question banks
-  const questionBanks = {
-    'sql': {
-      'Beginner': [
-        "What is SQL and what does it stand for?",
-        "Explain the difference between SELECT, INSERT, UPDATE, and DELETE statements.",
-        "What is a primary key and why is it important in database design?",
-        "How do you retrieve all records from a table called 'employees'?",
-        "What's the difference between WHERE and HAVING clauses?"
-      ],
-      'Intermediate': [
-        "Explain the different types of SQL JOINs with practical examples.",
-        "How would you find the second highest salary from an employees table?",
-        "What are database indexes and how do they improve query performance?",
-        "Write a query to find and remove duplicate records from a table.",
-        "Explain the difference between UNION and UNION ALL operations."
-      ],
-      'Advanced': [
-        "How would you optimize a slow-performing complex SQL query?",
-        "Explain window functions and provide a real-world use case.",
-        "What are stored procedures and when should you use them over regular queries?",
-        "How do you ensure database transactions maintain ACID properties?",
-        "Describe your approach to designing database schemas for scalable applications."
-      ]
-    },
-    'java': {
-      'Beginner': [
-        "What is Java and what are its main features that make it popular?",
-        "Explain the difference between JDK, JRE, and JVM.",
-        "What are the primitive data types in Java and their memory sizes?",
-        "How do you handle user input in a Java console application?",
-        "What's the difference between == and .equals() when comparing strings?"
-      ],
-      'Intermediate': [
-        "Explain inheritance, polymorphism, and encapsulation in Java.",
-        "What's the difference between ArrayList and LinkedList performance-wise?",
-        "How does exception handling work with try-catch-finally blocks?",
-        "When would you use an interface versus an abstract class?",
-        "Explain how multithreading works and potential synchronization issues."
-      ],
-      'Advanced': [
-        "How does Java's garbage collection work and what are the different GC algorithms?",
-        "Describe design patterns you've implemented in production Java code.",
-        "How do Java 8+ Streams improve code readability and performance?",
-        "What strategies do you use for Java application performance optimization?",
-        "How do you design and implement scalable microservices in Java?"
-      ]
-    },
-    'python': {
-      'Beginner': [
-        "What makes Python different from other programming languages?",
-        "Explain the difference between lists, tuples, and dictionaries in Python.",
-        "How do you handle exceptions using try-except blocks in Python?",
-        "What are Python's built-in data types and when do you use each?",
-        "How do you read from and write to files in Python?"
-      ],
-      'Intermediate': [
-        "Explain list comprehensions and when they're more efficient than regular loops.",
-        "What are Python decorators and how do you create custom ones?",
-        "How does Python's memory management and garbage collection work?",
-        "What's the difference between shallow copy and deep copy?",
-        "Explain generators, yield keyword, and their memory advantages."
-      ],
-      'Advanced': [
-        "What techniques do you use to optimize Python code performance?",
-        "Explain metaclasses and provide a practical use case.",
-        "How do you structure and test large Python applications?",
-        "What's your approach to handling concurrency in Python applications?",
-        "How do you design scalable REST APIs using Python frameworks?"
-      ]
-    },
-    'manual testing': {
-      'Beginner': [
-        "What is manual testing and how does it differ from automated testing?",
-        "Walk me through the basic manual testing process from start to finish.",
-        "What are test cases and what key elements should they contain?",
-        "Explain the difference between verification and validation in testing.",
-        "What are the main types of manual testing you're familiar with?"
-      ],
-      'Intermediate': [
-        "How do you prioritize test cases when working with tight deadlines?",
-        "What testing techniques do you use to ensure comprehensive coverage?",
-        "How do you adapt your testing approach for Agile development cycles?",
-        "Describe your process for exploratory testing and finding edge cases.",
-        "How do you maintain traceability between requirements and test execution?"
-      ],
-      'Advanced': [
-        "How do you design a comprehensive test strategy for complex applications?",
-        "Explain your approach to risk-based testing and resource allocation.",
-        "How do you mentor junior testers and establish testing best practices?",
-        "What's your strategy for balancing manual testing with test automation?",
-        "What metrics and KPIs do you use to measure testing effectiveness?"
-      ]
-    }
-  };
-
   // Generate consistent session ID for user
   function generateSessionId(email) {
     return hashPassword(email + 'session-salt').then(hash => 'session-' + hash.substring(0, 16));
@@ -1192,17 +1096,64 @@
   }
 
   function goBack() {
-    // Hide all containers
-    document.getElementById('resumeContainer').style.display = 'none';
-    document.getElementById('skillContainer').style.display = 'none';
-    document.getElementById('interviewContainer').style.display = 'none';
-    document.getElementById('backBtn').style.display = 'none';
+    // Determine current screen and go back appropriately
+    const resumeContainer = document.getElementById('resumeContainer');
+    const skillContainer = document.getElementById('skillContainer');
+    const interviewContainer = document.getElementById('interviewContainer');
     
-    // Show interview options
-    document.getElementById('interviewOptions').style.display = 'flex';
+    // If we're in interview mode, go back to respective form
+    if (interviewContainer.style.display === 'flex') {
+      interviewContainer.style.display = 'none';
+      
+      // Reset interview state
+      resetInterview();
+      
+      // Show the form based on interview type
+      if (interviewType === 'resume') {
+        document.getElementById('resumeContainer').style.display = 'flex';
+      } else if (interviewType === 'skill') {
+        document.getElementById('skillContainer').style.display = 'flex';
+      }
+      return;
+    }
     
-    // Reset any form data
-    resetInterview();
+    // If we're in resume or skill form, go back to options
+    if (resumeContainer.style.display === 'flex' || skillContainer.style.display === 'flex') {
+      // Hide current containers
+      resumeContainer.style.display = 'none';
+      skillContainer.style.display = 'none';
+      document.getElementById('backBtn').style.display = 'none';
+      
+      // Show interview options
+      document.getElementById('interviewOptions').style.display = 'flex';
+      
+      // Reset any form data
+      resetFormData();
+      return;
+    }
+  }
+
+  function resetFormData() {
+    // Reset interview type and related data
+    interviewType = '';
+    skill = '';
+    level = '';
+    resumeFile = null;
+    jobDescription = '';
+    
+    // Clear file upload
+    const fileInput = document.getElementById('resumeFile');
+    if (fileInput) fileInput.value = '';
+    const fileInfo = document.getElementById('fileInfo');
+    if (fileInfo) fileInfo.style.display = 'none';
+    
+    // Clear job description
+    const jdInput = document.getElementById('jobDescription');
+    if (jdInput) jdInput.value = '';
+    
+    // Clear skill input
+    const skillInput = document.getElementById('skillInput');
+    if (skillInput) skillInput.value = '';
   }
 
   // File Upload Functions
@@ -1285,7 +1236,6 @@
     // Hide resume container and show interview container
     document.getElementById('resumeContainer').style.display = 'none';
     document.getElementById('interviewContainer').style.display = 'flex';
-    document.getElementById('backBtn').style.display = 'none';
     
     startResumeBasedInterview();
   }
@@ -1302,37 +1252,17 @@
     // Hide skill container and show interview container
     document.getElementById('skillContainer').style.display = 'none';
     document.getElementById('interviewContainer').style.display = 'flex';
-    document.getElementById('backBtn').style.display = 'none';
     
     startSkillBasedInterview();
   }
 
   function resetInterview() {
     step = 0;
-    skill = '';
-    level = '';
-    interviewType = '';
-    resumeFile = null;
-    jobDescription = '';
     interviewStartTime = null;
     interviewEnded = false;
     timerStarted = false;
     questionIndex = 0;
     totalQuestionsAsked = 0;
-    
-    // Clear file upload
-    const fileInput = document.getElementById('resumeFile');
-    if (fileInput) fileInput.value = '';
-    const fileInfo = document.getElementById('fileInfo');
-    if (fileInfo) fileInfo.style.display = 'none';
-    
-    // Clear job description
-    const jdInput = document.getElementById('jobDescription');
-    if (jdInput) jdInput.value = '';
-    
-    // Clear skill input
-    const skillInput = document.getElementById('skillInput');
-    if (skillInput) skillInput.value = '';
     
     // Clear chat
     if (chat) chat.innerHTML = '';
@@ -1390,71 +1320,6 @@
       
       currentTopicSpan.textContent = topics[questionIndex] || "Discussion";
     }
-  }
-
-  function getRandomQuestion() {
-    const skillLower = skill.toLowerCase();
-    const skillQuestions = questionBanks[skillLower];
-    
-    if (skillQuestions && skillQuestions[level]) {
-      const questionPool = skillQuestions[level];
-      const usedQuestions = window.usedQuestions || [];
-      
-      const availableQuestions = questionPool.filter((q, index) => !usedQuestions.includes(index));
-      
-      if (availableQuestions.length === 0) {
-        window.usedQuestions = [];
-        const randomIndex = Math.floor(Math.random() * questionPool.length);
-        window.usedQuestions.push(randomIndex);
-        return questionPool[randomIndex];
-      }
-      
-      const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-      const selectedQuestion = availableQuestions[randomIndex];
-      const originalIndex = questionPool.indexOf(selectedQuestion);
-      
-      if (!window.usedQuestions) window.usedQuestions = [];
-      window.usedQuestions.push(originalIndex);
-      
-      return selectedQuestion;
-    }
-    
-    const genericQuestions = {
-      'Beginner': `What are the fundamental concepts of ${skill} that every beginner should know?`,
-      'Intermediate': `How do you apply ${skill} in real projects and what challenges have you faced?`,
-      'Advanced': `What advanced techniques and best practices do you follow when working with ${skill}?`
-    };
-    
-    return genericQuestions[level] || `Tell me about your experience with ${skill}.`;
-  }
-
-  function getContextualFollowUp(userAnswer) {
-    const answerLength = userAnswer.trim().length;
-    
-    const isWeakAnswer = answerLength < 15 || 
-                        userAnswer.toLowerCase().includes('dont know') ||
-                        userAnswer.toLowerCase().includes('no idea') ||
-                        userAnswer.toLowerCase().includes('not sure') ||
-                        userAnswer.toLowerCase() === 'yes' ||
-                        userAnswer.toLowerCase() === 'no' ||
-                        userAnswer.toLowerCase() === 'okay' ||
-                        userAnswer.toLowerCase() === 'ok';
-    
-    if (isWeakAnswer) {
-      const encouragements = [
-        "No problem! Let me ask something more specific.",
-        "That's okay! Here's a different question to help you show your knowledge.",
-        "Let's try a more targeted question."
-      ];
-      const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-      setTimeout(() => addMessage(randomEncouragement, "ai"), 500);
-    } else {
-      const feedbacks = ["Good point!", "I see!", "Interesting!", "That's helpful!", "Good explanation!"];
-      const randomFeedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-      setTimeout(() => addMessage(`${randomFeedback} Let me ask about another aspect.`, "ai"), 500);
-    }
-    
-    return getRandomQuestion();
   }
 
   function disableInput() {
@@ -1533,21 +1398,7 @@
   }
 
   async function handleSkillBasedMessage(message) {
-    if (step === 0) {
-      // This shouldn't happen for skill-based interviews as skill is already set
-      skill = message.trim();
-      if (skill.length < 2) {
-        addMessage("Please enter a valid technical skill.", "ai");
-        return;
-      }
-      step++;
-      setTimeout(() => {
-        addMessage(`Perfect! Choose your ${skill} level:`, "ai");
-        showLevelOptions();
-      }, 600);
-      return;
-    } 
-    else if (step === 2) {
+    if (step === 2) {
       if (getRemainingTime() <= 0) {
         endInterview();
         return;
@@ -1588,11 +1439,20 @@
         addMessage("🔧 Using offline mode", "ai", false, true);
       }
 
-      // Local fallback
+      // Local fallback - use generic AI-like responses
       setTimeout(() => {
-        const nextQuestion = getContextualFollowUp(message);
+        const aiResponses = [
+          `Interesting approach to ${skill}. Can you elaborate on how you would handle error scenarios in this context?`,
+          `That's a good foundation. Now, let me ask you about best practices when working with ${skill} in production environments.`,
+          `I see you understand the basics. How would you optimize performance when using ${skill} in large-scale applications?`,
+          `Good explanation. Can you walk me through how you would debug issues when working with ${skill}?`,
+          `Thanks for that insight. What challenges have you faced while working with ${skill} and how did you overcome them?`,
+          `That shows solid understanding. How do you stay updated with the latest developments in ${skill}?`
+        ];
+        
+        const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
         setTimeout(() => {
-          addMessage(nextQuestion, 'ai');
+          addMessage(randomResponse, 'ai');
           questionIndex++;
           updateQuestionCounter();
         }, 800);
@@ -1608,23 +1468,22 @@
 
     totalQuestionsAsked++;
     
-    // For resume-based interviews, we would typically send the resume content and job description
-    // to the AI service for analysis. For now, we'll use a generic approach.
-    
+    // For resume-based interviews, we'll use the AI agent later
+    // For now, use generic professional interview responses
     setTimeout(() => {
-      const genericResumeQuestions = [
-        "Tell me about a challenging project mentioned in your resume.",
-        "How do you stay updated with the latest technologies in your field?",
-        "Describe a situation where you had to work under tight deadlines.",
-        "What's your approach to problem-solving in your previous role?",
-        "How do you handle feedback and criticism from team members?",
-        "Tell me about a time you had to learn a new technology quickly."
+      const resumeResponses = [
+        "That's valuable experience. Can you tell me about a specific challenge you faced in one of your previous projects and how you resolved it?",
+        "Excellent background. How do you approach learning new technologies when they're required for a project?",
+        "Good to hear about your experience. Describe a time when you had to work with a difficult team member or stakeholder.",
+        "Interesting career path. What motivates you to perform well in your work, and how do you handle pressure?",
+        "Thanks for sharing that. Can you walk me through your problem-solving process when facing a complex technical issue?",
+        "Great experience. How do you prioritize tasks when working on multiple projects with competing deadlines?"
       ];
       
-      const randomQuestion = genericResumeQuestions[Math.floor(Math.random() * genericResumeQuestions.length)];
+      const randomResponse = resumeResponses[Math.floor(Math.random() * resumeResponses.length)];
       
       setTimeout(() => {
-        addMessage("Based on your resume, " + randomQuestion, 'ai');
+        addMessage(randomResponse, 'ai');
         questionIndex++;
         updateQuestionCounter();
       }, 800);
@@ -1677,7 +1536,8 @@
     startInterviewTimer();
     
     setTimeout(() => {
-      const firstQuestion = getRandomQuestion();
+      // Use AI agent for first question
+      const firstQuestion = `Great! Let's start with a fundamental question about ${skill} at ${level} level. Can you explain the core concepts that someone at your level should know?`;
       addMessage(firstQuestion, 'ai');
       questionIndex = 1;
       updateQuestionCounter();
@@ -1712,7 +1572,7 @@
       startInterviewTimer();
       
       setTimeout(() => {
-        const firstQuestion = "Tell me about yourself and your professional background.";
+        const firstQuestion = "Tell me about yourself and your professional background highlighted in your resume.";
         addMessage(firstQuestion, 'ai');
         questionIndex = 1;
         updateQuestionCounter();
