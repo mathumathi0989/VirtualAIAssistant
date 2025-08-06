@@ -1386,85 +1386,83 @@
   }
 
   // FIXED AI INTERVIEWER FUNCTION - Better question tracking
-  async function callAIInterviewer(userMessage, isFirstMessage = false) {
-    const loadingMessage = addMessage("AI is thinking...", "ai", false, false, true);
-    
-    // Add user message to conversation history
-    if (userMessage) {
-      conversationHistory.push({
-        role: "user",
-        message: userMessage
-      });
-    }
-    
-    try {
-      const response = await fetch('https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          name: currentUser.name,
-          email: currentUser.email,
-          skill: skill,
-          level: level,
-          jobDescription: jobDescription,
-          userMessage: userMessage || "",
-          questionIndex: questionIndex + 1,
-          totalQuestionsAsked: totalQuestionsAsked,
-          conversationHistory: conversationHistory,
-          interviewType: interviewType,
-          step: isFirstMessage ? 'start_interview' : 'ongoing_interview',
-          remainingTime: getRemainingTime()
-        }),
-        timeout: 10000
-      });
-
-      // Remove loading message
-      if (chat.contains(loadingMessage)) {
-        chat.removeChild(loadingMessage);
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data?.reply?.trim()?.length > 0) {
-          // Store the NEW question being asked
-          questionId++;
-          const newQuestion = {
-            id: questionId,
-            text: data.reply,
-            timestamp: new Date().toISOString(),
-            sessionId: sessionId
-          };
-          
-          // Add AI response to conversation history
-          conversationHistory.push({
-            role: "assistant",
-            message: data.reply
-          });
-          
-          addMessage(data.reply, 'ai');
-          questionIndex++;
-          updateQuestionCounter();
-          
-          // Set this as the current question user needs to respond to
-          currentAIQuestion = newQuestion;
-          
-          return true;
-        }
-      }
-      
-      throw new Error('Invalid response from AI service');
-      
-    } catch (error) {
-      console.error('AI service error:', error);
-      if (chat.contains(loadingMessage)) {
-        chat.removeChild(loadingMessage);
-      }
-      
-      // Fallback to generic responses
-      return generateFallbackResponse(userMessage, isFirstMessage);
-    }
+async function callAIInterviewer(userMessage, isFirstMessage = false) {
+  const loadingMessage = addMessage("AI is thinking...", "ai", false, false, true);
+  
+  // Add user message to conversation history if it exists
+  if (userMessage && !isFirstMessage) {
+    conversationHistory.push({
+      role: "user",
+      message: userMessage
+    });
   }
+  
+  console.log('📤 Sending to API:', {
+    sessionId: sessionId,
+    userMessage: userMessage,
+    isFirstMessage: isFirstMessage,
+    questionIndex: questionIndex
+  });
+  
+  try {
+    const response = await fetch('https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessionId,
+        name: currentUser.name,
+        email: currentUser.email,
+        skill: skill,
+        level: level,
+        jobDescription: jobDescription,
+        userMessage: userMessage || "",
+        questionIndex: questionIndex,
+        totalQuestionsAsked: totalQuestionsAsked,
+        conversationHistory: conversationHistory,
+        interviewType: interviewType,
+        step: isFirstMessage ? 'start_interview' : 'ongoing_interview',
+        remainingTime: getRemainingTime(),
+        password: "dummy_password"
+      }),
+      timeout: 15000
+    });
+
+    // Remove loading message
+    if (chat.contains(loadingMessage)) {
+      chat.removeChild(loadingMessage);
+    }
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('📥 Received from API:', data);
+      
+      if (data?.reply?.trim()?.length > 0) {
+        // Add AI response to conversation history
+        conversationHistory.push({
+          role: "assistant",
+          message: data.reply
+        });
+        
+        addMessage(data.reply, 'ai');
+        questionIndex++;
+        updateQuestionCounter();
+        
+        console.log('✅ Question received and logged');
+        return true;
+      }
+    }
+    
+    throw new Error('Invalid response from AI service');
+    
+  } catch (error) {
+    console.error('❌ AI service error:', error);
+    if (chat.contains(loadingMessage)) {
+      chat.removeChild(loadingMessage);
+    }
+    
+    return generateFallbackResponse(userMessage, isFirstMessage);
+  }
+}
 
   function generateFallbackResponse(userMessage, isFirstMessage) {
     let response;
