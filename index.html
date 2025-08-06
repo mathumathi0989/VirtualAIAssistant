@@ -1424,20 +1424,8 @@
       if (interviewType === 'skill') {
         response = `Hello! I'll be conducting your ${skill} interview today. Let's start with a foundational question: Can you tell me about your experience with ${skill} and what projects you've worked on recently?`;
       } else {
-        response = "Hello! I'll be conducting your interview today based on your resume. Let's start by having you walk me through your professional background and highlight some key achievements.";
-      }
-    } else {
-      const genericResponses = [
-        "That's interesting. Can you elaborate more on that approach?",
-        "Good point. How would you handle edge cases or potential issues with that solution?",
-        "I see. What other alternatives did you consider?",
-        "That's a solid answer. Can you give me a specific example from your experience?",
-        "Interesting perspective. How would you explain this concept to someone new to the field?",
-        "Thank you for that explanation. What challenges have you faced while working with this?"
-      ];
-      
-      response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
-    }
+              }
+    } 
     
     // Add AI response to conversation history
     conversationHistory.push({
@@ -1559,4 +1547,5 @@
 
 </body>
 </html>
+
 
