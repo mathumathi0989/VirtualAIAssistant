@@ -1,783 +1,673 @@
-{
-  "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "virtual-interview",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -464,
-        0
-      ],
-      "id": "64261b79-11b3-44c2-9da4-bca7a935c446",
-      "name": "Webhook",
-      "webhookId": "b353a9be-d6e2-4c6b-836d-21c032168ebd"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "176cc3af-edff-471f-879d-a7621f39813a",
-              "name": "sessionId",
-              "value": "={{$json.body.sessionId}}",
-              "type": "string"
-            },
-            {
-              "id": "03972f98-5d30-4c78-83e1-228b98f3f8ee",
-              "name": "name",
-              "value": "={{$json.body.name}}",
-              "type": "string"
-            },
-            {
-              "id": "cc55465e-d3c2-420c-b2a7-e9067ed16e12",
-              "name": "emailId",
-              "value": "={{$json.body.email}}",
-              "type": "string"
-            },
-            {
-              "id": "880d38cd-16e3-4515-8090-712cdd398bb8",
-              "name": "skill",
-              "value": "={{ $json.body.skill }}",
-              "type": "string"
-            },
-            {
-              "id": "73495166-6189-4ff6-9aaf-6a3fca5596b8",
-              "name": "level",
-              "value": "={{ $json.body.level }}",
-              "type": "string"
-            },
-            {
-              "id": "6f3a510b-03e1-402d-a85f-08ac47fd953c",
-              "name": "userMessage",
-              "value": "={{ $json.body.userMessage }}",
-              "type": "string"
-            },
-            {
-              "id": "df25233f-48bc-40d8-b82c-eacd6e56f17e",
-              "name": "password",
-              "value": "={{ $json.body.password }}",
-              "type": "string"
-            },
-            {
-              "id": "new-field-1",
-              "name": "questionIndex",
-              "value": "={{ $json.body.questionIndex || 1 }}",
-              "type": "number"
-            },
-            {
-              "id": "new-field-2",
-              "name": "answerQuality",
-              "value": "={{ $json.body.answerQuality || 'average' }}",
-              "type": "string"
-            },
-            {
-              "id": "new-field-3",
-              "name": "correctAnswers",
-              "value": "={{ $json.body.correctAnswers || 0 }}",
-              "type": "number"
-            },
-            {
-              "id": "new-field-4",
-              "name": "totalQuestions",
-              "value": "={{ $json.body.totalQuestions || 0 }}",
-              "type": "number"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -320,
-        0
-      ],
-      "id": "8b2fbb9a-07db-4ca2-9920-e3d026ef1ae4",
-      "name": "Set Inputs"
-    },
-    {
-      "parameters": {
-        "operation": "read",
-        "documentId": {
-          "__rl": true,
-          "value": "11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA",
-          "mode": "list",
-          "cachedResultName": "userDetails",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 854953377,
-          "mode": "list",
-          "cachedResultName": "InterviewSessions",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit#gid=854953377"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "id": "filter-1",
-              "column": "sessionId",
-              "operator": "equal",
-              "value": "={{ $json.sessionId }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.6,
-      "position": [
-        -160,
-        -160
-      ],
-      "id": "check-previous-questions",
-      "name": "Check Previous Questions",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "JtxylX6y3Pg7jWWo",
-          "name": "Google Sheets account"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// Get all previously asked questions for this session\nconst sessionData = $input.all();\nconst previousQuestions = [];\n\n// Extract questions from the session data\nif (sessionData && sessionData.length > 0) {\n  sessionData.forEach(item => {\n    if (item.json && item.json.questionAsked) {\n      previousQuestions.push(item.json.questionAsked.toLowerCase());\n    }\n  });\n}\n\n// Get user inputs from the Set Inputs node\nconst userInputs = $('Set Inputs').first().json;\n\nreturn [{\n  json: {\n    ...userInputs,\n    previousQuestions: previousQuestions,\n    previousQuestionsCount: previousQuestions.length\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        20,
-        -80
-      ],
-      "id": "process-previous-questions",
-      "name": "Process Previous Questions"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "bf2e7101-f71b-4a81-8031-43cd626e7611",
-              "name": "prompt",
-              "value": "=You are an expert {{$json.skill}} interviewer conducting a technical interview.\n\nCANDIDATE: {{$json.name}} ({{$json.level}} level)\nQUESTION #: {{$json.questionIndex || 1}}\nPREVIOUS ANSWER: \"{{$json.userMessage || 'Starting interview'}}\"\nANSWER QUALITY: {{$json.answerQuality || 'average'}}\nCORRECT ANSWERS: {{$json.correctAnswers || 0}}/{{$json.totalQuestions || 0}}\n\nPREVIOUSLY ASKED QUESTIONS IN THIS SESSION:\n{{$json.previousQuestions && $json.previousQuestions.length > 0 ? $json.previousQuestions.map((q, i) => `${i+1}. ${q}`).join('\\n') : 'None yet'}}\n\nSTRICT ANTI-REPEAT RULES:\n1. NEVER ask any question that appears in the \"PREVIOUSLY ASKED QUESTIONS\" list above\n2. If you notice ANY similarity to a previous question, immediately change topic completely\n3. Generate a COMPLETELY FRESH, UNIQUE question that has NOT been asked before\n4. Cover different aspects and areas of {{$json.skill}}\n5. Avoid asking the same concept in different words\n\nQUESTION VARIETY STRATEGY:\n- Rotate between: Fundamentals → Practical Experience → Tools → Best Practices → Problem Solving → Real Scenarios\n- For each area, ask about different sub-topics\n- If candidate struggles, switch to a completely different area\n- Keep building comprehensive coverage without repetition\n\nLEVEL PROGRESSION LOGIC:\n{{$json.correctAnswers >= 3 && $json.totalQuestions >= 3 ? \n  'LEVEL UP: The candidate has answered 3+ questions correctly. Consider moving to the next difficulty level.' :\n  'MAINTAIN LEVEL: Continue with current level questions.'}}\n\nINTERVIEW GUIDELINES:\n1. Act like a real interviewer - be conversational and encouraging\n2. Give specific feedback on their previous answer (2-3 words: \"Good!\", \"Excellent!\", \"I see...\")\n3. Ask ONE completely NEW question appropriate for {{$json.level}} level\n4. ENSURE the question is 100% different from any previously asked\n5. If answer quality is weak, offer encouragement and ask a simpler but DIFFERENT question\n\nLEVEL EXPECTATIONS:\n- Beginner: Basic concepts, simple definitions, foundational knowledge\n- Intermediate: Practical applications, tools, real-world scenarios, problem-solving\n- Advanced: Strategy, complex scenarios, best practices, leadership, mentoring\n\nRESPONSE FORMAT:\n[Brief feedback] [One completely new specific question]\n\nExample: \"Good explanation! Now, tell me about a time you optimized database performance - what approach did you take?\"\n\nCRITICAL: Your question MUST be completely unique and not appear in the previous questions list.",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        200,
-        80
-      ],
-      "id": "4ec77ec5-a8bd-48b2-b1aa-bdfdf025f0d3",
-      "name": "Create Enhanced Interview Prompt"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=={{$json[\"prompt\"]}}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 2.1,
-      "position": [
-        392,
-        80
-      ],
-      "id": "a955320e-2ea7-4507-9cc6-4fc87d74c43b",
-      "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        456,
-        304
-      ],
-      "id": "b29decf8-7b65-43ee-97ff-7708ab2fd6b8",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "KJBaH3Lw8PnGLkH8",
-          "name": "Google Gemini(PaLM) Api account"
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-      }
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": 200,
-          "responseKey": "={{ $json.reply }}"
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
         }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        1144,
-        224
-      ],
-      "id": "999e903b-b288-4e86-bed2-5d509cc8376e",
-      "name": "Respond to Webhook1"
-    },
-    {
-      "parameters": {
-        "operation": "appendOrUpdate",
-        "documentId": {
-          "__rl": true,
-          "value": "11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA",
-          "mode": "list",
-          "cachedResultName": "userDetails",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "userList",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit#gid=0"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "sessionId": "={{ $json.sessionId }}",
-            "name": "={{ $json.name }}",
-            "email": "={{ $json.emailId }}",
-            "skill": "={{ $json.skill }}",
-            "level": "={{ $json.level }}",
-            "password": "={{ $json.password }}"
-          },
-          "matchingColumns": [
-            "sessionId"
-          ],
-          "schema": [
-            {
-              "id": "sessionId",
-              "displayName": "sessionId",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "name",
-              "displayName": "name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "email",
-              "displayName": "email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "password",
-              "displayName": "password",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "skill",
-              "displayName": "skill",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "level",
-              "displayName": "level",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.6,
-      "position": [
-        200,
-        -200
-      ],
-      "id": "6fb29110-f361-4a31-9e6e-1199625e4056",
-      "name": "Update User Data",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "JtxylX6y3Pg7jWWo",
-          "name": "Google Sheets account"
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA",
-          "mode": "list",
-          "cachedResultName": "userDetails",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 854953377,
-          "mode": "list",
-          "cachedResultName": "InterviewSessions",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit#gid=854953377"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "timestamp": "={{ new Date().toISOString() }}",
-            "sessionId": "={{ $('Set Inputs').item.json.sessionId }}",
-            "questionAsked": "={{ $json.cleanOutput }}",
-            "userResponse": "={{ $('Set Inputs').item.json.userMessage || '' }}",
-            "questionIndex": "={{ $('Set Inputs').item.json.questionIndex || 1 }}",
-            "answerQuality": "={{ $('Set Inputs').item.json.answerQuality || 'average' }}",
-            "correctAnswers": "={{ $('Set Inputs').item.json.correctAnswers || 0 }}",
-            "skill": "={{ $('Set Inputs').item.json.skill }}",
-            "level": "={{ $('Set Inputs').item.json.level }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "sessionId",
-              "displayName": "sessionId",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "questionAsked",
-              "displayName": "questionAsked",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "userResponse",
-              "displayName": "userResponse",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "timestamp",
-              "displayName": "timestamp",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "questionIndex",
-              "displayName": "questionIndex",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "answerQuality",
-              "displayName": "answerQuality",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "correctAnswers",
-              "displayName": "correctAnswers",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "skill",
-              "displayName": "skill",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "level",
-              "displayName": "level",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.6,
-      "position": [
-        1096,
-        -48
-      ],
-      "id": "1020e168-0010-40f0-b408-70b3e5423ab9",
-      "name": "Log Interview Question",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "JtxylX6y3Pg7jWWo",
-          "name": "Google Sheets account"
+
+        .back-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return [\n  {\n    json: {\n      reply: $json.cleanOutput\n    }\n  }\n];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        952,
-        224
-      ],
-      "id": "725c2ad9-ee52-4213-a08e-2d1193afd6b4",
-      "name": "Extract First Response"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "020fb643-f1d0-4b7c-9835-c95c98df78ee",
-              "name": "cleanOutput",
-              "value": "={{ $json.output.startsWith('=') ? $json.output.slice(1) : $json.output }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        776,
-        32
-      ],
-      "id": "e11f8ff6-7107-4505-9d42-8c7026ec8383",
-      "name": "Clean AI Output"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "get-session",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -464,
-        400
-      ],
-      "id": "get-session-webhook",
-      "name": "Get Session Webhook",
-      "webhookId": "get-session-webhook-id"
-    },
-    {
-      "parameters": {
-        "operation": "read",
-        "documentId": {
-          "__rl": true,
-          "value": "11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA",
-          "mode": "list",
-          "cachedResultName": "userDetails",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "userList",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11VFRqrHmDBKePHfiKy4hpV4eepOi_gTN0sWOTn9qncA/edit#gid=0"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "id": "filter-1",
-              "column": "email",
-              "operator": "equal",
-              "value": "={{ $json.body.email }}"
-            },
-            {
-              "id": "filter-2",
-              "column": "password",
-              "operator": "equal",
-              "value": "={{ $json.body.password }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.6,
-      "position": [
-        -260,
-        400
-      ],
-      "id": "find-existing-session",
-      "name": "Find Existing Session",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "JtxylX6y3Pg7jWWo",
-          "name": "Google Sheets account"
+
+        .back-button.hidden {
+            display: none;
         }
-      }
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": 200
-        },
-        "responseBody": "={{ $json.sessionId ? { sessionId: $json.sessionId } : { sessionId: null } }}"
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        -60,
-        400
-      ],
-      "id": "respond-session",
-      "name": "Respond Session"
-    }
-  ],
-  "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Set Inputs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Inputs": {
-      "main": [
-        [
-          {
-            "node": "Check Previous Questions",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Update User Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Previous Questions": {
-      "main": [
-        [
-          {
-            "node": "Process Previous Questions",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Process Previous Questions": {
-      "main": [
-        [
-          {
-            "node": "Create Enhanced Interview Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Enhanced Interview Prompt": {
-      "main": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Clean AI Output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Respond to Webhook1": {
-      "main": [
-        []
-      ]
-    },
-    "Update User Data": {
-      "main": [
-        []
-      ]
-    },
-    "Log Interview Question": {
-      "main": [
-        []
-      ]
-    },
-    "Extract First Response": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Clean AI Output": {
-      "main": [
-        [
-          {
-            "node": "Extract First Response",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Log Interview Question",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Session Webhook": {
-      "main": [
-        [
-          {
-            "node": "Find Existing Session",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Find Existing Session": {
-      "main": [
-        [
-          {
-            "node": "Respond Session",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "pinData": {
-    "Webhook": [
-      {
-        "headers": {
-          "host": "interviewainumpy.app.n8n.cloud",
-          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-          "content-length": "200",
-          "accept": "*/*",
-          "accept-encoding": "gzip, br",
-          "accept-language": "en-US,en;q=0.9",
-          "content-type": "application/json"
-        },
-        "params": {},
-        "query": {},
-        "body": {
-          "sessionId": "session-1754064018790-29568",
-          "name": "Test User",
-          "email": "test@example.com",
-          "skill": "java",
-          "level": "Intermediate",
-          "userMessage": "I have experience with Java collections and object-oriented programming",
-          "questionIndex": 2,
-          "answerQuality": "strong",
-          "correctAnswers": 1,
-          "totalQuestions": 1,
-          "password": "hashedpassword123"
-        },
-        "webhookUrl": "https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview",
-        "executionMode": "production"
-      }
-    ]
-  },
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "c82967bae5ce611e728e5e4bcea606764e9049a76de6a7a46d598ed3e58067d5"
-  }
-}
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .selection-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 2px dashed #e9ecef;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-label:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .user-message {
+            background: #e3f2fd;
+            color: #333;
+            margin-left: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .selection-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back Button -->
+        <div class="back-button hidden" id="backButton" onclick="goBack()">
+            ←
+        </div>
+
+        <!-- Step 1: Interview Type Selection -->
+        <div class="step active" id="step1">
+            <h1>Choose Interview Type</h1>
+            <div class="selection-cards">
+                <div class="card" onclick="selectInterviewType('skill')">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-title">Skill-Based Interview</div>
+                    <div class="card-description">Technical questions based on your chosen skill and level</div>
+                </div>
+                <div class="card" onclick="selectInterviewType('resume')">
+                    <div class="card-icon">📄</div>
+                    <div class="card-title">Resume-Based Interview</div>
+                    <div class="card-description">Questions tailored to your resume and experience</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Skill-Based Setup -->
+        <div class="step" id="step2-skill">
+            <h1>Skill-Based Interview Setup</h1>
+            <form id="skillForm">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="skill">Select Skill</label>
+                    <select id="skill" name="skill" required>
+                        <option value="">Choose a skill...</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="react">React</option>
+                        <option value="sql">SQL</option>
+                        <option value="node">Node.js</option>
+                        <option value="angular">Angular</option>
+                        <option value="vue">Vue.js</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="level">Experience Level</label>
+                    <select id="level" name="level" required>
+                        <option value="">Choose level...</option>
+                        <option value="Beginner">Beginner (0-1 years)</option>
+                        <option value="Intermediate">Intermediate (2-4 years)</option>
+                        <option value="Advanced">Advanced (5+ years)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">Start Skill Interview</button>
+            </form>
+        </div>
+
+        <!-- Step 3: Resume-Based Setup -->
+        <div class="step" id="step2-resume">
+            <h1>Resume-Based Interview Setup</h1>
+            <form id="resumeForm">
+                <div class="form-group">
+                    <label for="resumeName">Full Name</label>
+                    <input type="text" id="resumeName" name="resumeName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="resumeEmail">Email</label>
+                    <input type="email" id="resumeEmail" name="resumeEmail" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="resumePassword">Password</label>
+                    <input type="password" id="resumePassword" name="resumePassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="resumeFile">Upload Resume (PDF)</label>
+                    <div class="file-upload">
+                        <input type="file" id="resumeFile" accept=".pdf" required>
+                        <label for="resumeFile" class="file-upload-label">
+                            📎 Click to upload resume or drag and drop
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="experience">Years of Experience</label>
+                    <select id="experience" name="experience" required>
+                        <option value="">Choose experience...</option>
+                        <option value="0-1">0-1 years</option>
+                        <option value="2-4">2-4 years</option>
+                        <option value="5-7">5-7 years</option>
+                        <option value="8+">8+ years</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">Start Resume Interview</button>
+            </form>
+        </div>
+
+        <!-- Step 4: Interview Chat -->
+        <div class="step" id="step3">
+            <h1 id="interviewTitle">Interview in Progress</h1>
+            <div class="chat-container" id="chatContainer">
+                <!-- Messages will be added here dynamically -->
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AI is thinking...</p>
+            </div>
+            
+            <div class="form-group">
+                <textarea id="userResponse" placeholder="Type your answer here..." rows="4"></textarea>
+            </div>
+            
+            <button onclick="sendResponse()" class="btn" id="sendBtn">Send Answer</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let interviewType = null;
+        let sessionId = null;
+        let questionIndex = 1;
+        let userData = {};
+
+        // Show back button when not on step 1
+        function updateBackButton() {
+            const backButton = document.getElementById('backButton');
+            if (currentStep > 1) {
+                backButton.classList.remove('hidden');
+            } else {
+                backButton.classList.add('hidden');
+            }
+        }
+
+        // Go back to previous step
+        function goBack() {
+            if (currentStep === 2) {
+                // Go back to interview type selection
+                showStep(1);
+                interviewType = null;
+            } else if (currentStep === 3) {
+                // Go back to form based on interview type
+                if (interviewType === 'skill') {
+                    showStep(2, 'skill');
+                } else {
+                    showStep(2, 'resume');
+                }
+            }
+        }
+
+        function showStep(step, subType = null) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            
+            currentStep = step;
+            
+            if (step === 1) {
+                document.getElementById('step1').classList.add('active');
+            } else if (step === 2) {
+                if (subType === 'skill') {
+                    document.getElementById('step2-skill').classList.add('active');
+                } else {
+                    document.getElementById('step2-resume').classList.add('active');
+                }
+            } else if (step === 3) {
+                document.getElementById('step3').classList.add('active');
+            }
+            
+            updateBackButton();
+        }
+
+        function selectInterviewType(type) {
+            interviewType = type;
+            if (type === 'skill') {
+                showStep(2, 'skill');
+            } else {
+                showStep(2, 'resume');
+            }
+        }
+
+        // Generate unique session ID
+        function generateSessionId() {
+            return 'session-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+        }
+
+        // Handle skill-based form submission
+        document.getElementById('skillForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            userData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                skill: document.getElementById('skill').value,
+                level: document.getElementById('level').value,
+                type: 'skill'
+            };
+            
+            sessionId = generateSessionId();
+            document.getElementById('interviewTitle').textContent = `${userData.skill} Interview - ${userData.level} Level`;
+            
+            showStep(3);
+            startInterview();
+        });
+
+        // Handle resume-based form submission
+        document.getElementById('resumeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resumeFile = document.getElementById('resumeFile').files[0];
+            if (!resumeFile) {
+                alert('Please upload a resume file');
+                return;
+            }
+            
+            userData = {
+                name: document.getElementById('resumeName').value,
+                email: document.getElementById('resumeEmail').value,
+                password: document.getElementById('resumePassword').value,
+                experience: document.getElementById('experience').value,
+                type: 'resume',
+                resumeFile: resumeFile
+            };
+            
+            sessionId = generateSessionId();
+            document.getElementById('interviewTitle').textContent = 'Resume-Based Interview';
+            
+            showStep(3);
+            startResumeInterview();
+        });
+
+        // Start skill-based interview
+        async function startInterview() {
+            try {
+                showLoading(true);
+                
+                const response = await fetch('https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        name: userData.name,
+                        email: userData.email,
+                        password: userData.password,
+                        skill: userData.skill,
+                        level: userData.level,
+                        userMessage: "Starting interview",
+                        questionIndex: 1
+                    })
+                });
+
+                const data = await response.text();
+                addMessage(data, 'ai');
+                questionIndex = 2;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error starting the interview. Please try again.', 'ai');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Start resume-based interview (you'll need to create a separate webhook for this)
+        async function startResumeInterview() {
+            try {
+                showLoading(true);
+                
+                // For now, we'll use the same webhook but with different parameters
+                // You should create a separate webhook endpoint for resume-based interviews
+                const response = await fetch('https://interviewainumpy.app.n8n.cloud/webhook/resume-interview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        name: userData.name,
+                        email: userData.email,
+                        password: userData.password,
+                        experience: userData.experience,
+                        type: 'resume',
+                        userMessage: "Starting resume-based interview",
+                        questionIndex: 1
+                    })
+                });
+
+                const data = await response.text();
+                addMessage(data, 'ai');
+                questionIndex = 2;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error starting the interview. Please try again.', 'ai');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Send user response
+        async function sendResponse() {
+            const userResponse = document.getElementById('userResponse').value.trim();
+            if (!userResponse) return;
+
+            addMessage(userResponse, 'user');
+            document.getElementById('userResponse').value = '';
+
+            try {
+                showLoading(true);
+                
+                const webhookUrl = interviewType === 'skill' 
+                    ? 'https://interviewainumpy.app.n8n.cloud/webhook/virtual-interview'
+                    : 'https://interviewainumpy.app.n8n.cloud/webhook/resume-interview';
+                
+                const requestBody = {
+                    sessionId: sessionId,
+                    name: userData.name,
+                    email: userData.email,
+                    password: userData.password,
+                    userMessage: userResponse,
+                    questionIndex: questionIndex
+                };
+                
+                if (interviewType === 'skill') {
+                    requestBody.skill = userData.skill;
+                    requestBody.level = userData.level;
+                } else {
+                    requestBody.experience = userData.experience;
+                    requestBody.type = 'resume';
+                }
+
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.text();
+                addMessage(data, 'ai');
+                questionIndex++;
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your response. Please try again.', 'ai');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function addMessage(message, type) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.textContent = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (show) {
+                loading.classList.add('show');
+                sendBtn.disabled = true;
+            } else {
+                loading.classList.remove('show');
+                sendBtn.disabled = false;
+            }
+        }
+
+        // Handle Enter key for sending responses
+        document.getElementById('userResponse').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendResponse();
+            }
+        });
+
+        // File upload handling
+        document.getElementById('resumeFile').addEventListener('change', function(e) {
+            const label = document.querySelector('.file-upload-label');
+            if (e.target.files.length > 0) {
+                label.textContent = '📎 ' + e.target.files[0].name;
+            }
+        });
+    </script>
+</body>
+</html>
