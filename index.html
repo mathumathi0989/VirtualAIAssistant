@@ -822,6 +822,11 @@
   let totalQuestionsAsked = 0;
   let conversationHistory = [];
 
+  // NEW VARIABLES FOR FIXED SYSTEM
+  let currentQuestion = null;
+  let questionWaitingForResponse = null;
+  let questionId = 0;
+
   // Generate consistent session ID for user
   function generateSessionId(email) {
     return hashPassword(email + 'session-salt').then(hash => 'session-' + hash.substring(0, 16));
@@ -1234,6 +1239,11 @@
     totalQuestionsAsked = 0;
     conversationHistory = [];
     
+    // Reset new tracking variables
+    currentQuestion = null;
+    questionWaitingForResponse = null;
+    questionId = 0;
+    
     // Clear chat
     if (chat) chat.innerHTML = '';
     
@@ -1348,7 +1358,28 @@
     return Math.max(0, 180 - elapsed);
   }
 
-  // Dynamic AI Interview Functions
+  // NEW FIXED LOGGING FUNCTION
+  async function logQuestionAndResponse(questionData, userResponse) {
+    try {
+      await fetch('https://interviewainumpy.app.n8n.cloud/webhook/log-interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: questionData.sessionId,
+          questionId: questionData.id,
+          questionText: questionData.text,
+          userResponse: userResponse,
+          timestamp: new Date().toISOString(),
+          questionTimestamp: questionData.timestamp
+        })
+      });
+      console.log('Question and response logged successfully');
+    } catch (error) {
+      console.error('Failed to log question and response:', error);
+    }
+  }
+
+  // UPDATED AI INTERVIEWER FUNCTION
   async function callAIInterviewer(userMessage, isFirstMessage = false) {
     const loadingMessage = addMessage("AI is thinking...", "ai", false, false, true);
     
@@ -1379,7 +1410,7 @@
           step: isFirstMessage ? 'start_interview' : 'ongoing_interview',
           remainingTime: getRemainingTime()
         }),
-        timeout: 10000 // 10 second timeout
+        timeout: 10000
       });
 
       // Remove loading message
@@ -1388,6 +1419,15 @@
       if (response.ok) {
         const data = await response.json();
         if (data?.reply?.trim()?.length > 0) {
+          // Store the current question
+          questionId++;
+          currentQuestion = {
+            id: questionId,
+            text: data.reply,
+            timestamp: new Date().toISOString(),
+            sessionId: sessionId
+          };
+          
           // Add AI response to conversation history
           conversationHistory.push({
             role: "assistant",
@@ -1397,6 +1437,10 @@
           addMessage(data.reply, 'ai');
           questionIndex++;
           updateQuestionCounter();
+          
+          // Set this question as waiting for response
+          questionWaitingForResponse = currentQuestion;
+          
           return true;
         }
       }
@@ -1405,7 +1449,6 @@
       
     } catch (error) {
       console.error('AI service error:', error);
-      // Remove loading message
       if (chat.contains(loadingMessage)) {
         chat.removeChild(loadingMessage);
       }
@@ -1437,6 +1480,15 @@
       response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
     }
     
+    // Store the fallback question the same way
+    questionId++;
+    currentQuestion = {
+      id: questionId,
+      text: response,
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId
+    };
+    
     // Add AI response to conversation history
     conversationHistory.push({
       role: "assistant", 
@@ -1446,9 +1498,14 @@
     addMessage(response, 'ai');
     questionIndex++;
     updateQuestionCounter();
+    
+    // Set this question as waiting for response
+    questionWaitingForResponse = currentQuestion;
+    
     return true;
   }
 
+  // UPDATED SEND MESSAGE FUNCTION
   async function sendMessage() {
     const message = input.value.trim();
     if (!message || interviewEnded) return;
@@ -1464,9 +1521,15 @@
       return;
     }
 
+    // Log the previous question with current response
+    if (questionWaitingForResponse) {
+      await logQuestionAndResponse(questionWaitingForResponse, message);
+      questionWaitingForResponse = null; // Clear it after logging
+    }
+
     totalQuestionsAsked++;
     
-    // Call AI interviewer
+    // Get next question from AI
     await callAIInterviewer(message, false);
     
     enableInput();
