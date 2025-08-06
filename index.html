@@ -823,8 +823,7 @@
   let conversationHistory = [];
 
   // FIXED TRACKING VARIABLES
-  let currentQuestion = null; // Stores the currently displayed question
-  let awaitingResponseTo = null; // Stores which question we're waiting for response to
+  let currentAIQuestion = null; // Stores the currently displayed AI question
   let questionId = 0;
 
   // Generate consistent session ID for user
@@ -1240,8 +1239,7 @@
     conversationHistory = [];
     
     // Reset new tracking variables
-    currentQuestion = null;
-    awaitingResponseTo = null;
+    currentAIQuestion = null;
     questionId = 0;
     
     // Clear chat
@@ -1358,21 +1356,22 @@
     return Math.max(0, 180 - elapsed);
   }
 
-  // FIXED LOGGING FUNCTION - Now logs question AFTER user responds
-  async function logQuestionAndResponse(questionData, userResponse) {
+  // FIXED LOGGING FUNCTION - Logs question and response together
+  async function logQuestionResponse(questionData, userResponse) {
     try {
-      console.log('Logging Q&A:', {
-        sessionId: questionData.sessionId,
+      console.log('📝 Logging Q&A pair:', {
+        sessionId: sessionId,
         questionId: questionData.id,
         questionText: questionData.text,
-        userResponse: userResponse
+        userResponse: userResponse,
+        timestamp: new Date().toISOString()
       });
 
       await fetch('https://interviewainumpy.app.n8n.cloud/webhook/log-interview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: questionData.sessionId,
+          sessionId: sessionId,
           questionId: questionData.id,
           questionText: questionData.text,
           userResponse: userResponse,
@@ -1380,9 +1379,9 @@
           questionTimestamp: questionData.timestamp
         })
       });
-      console.log('✅ Question and response logged successfully');
+      console.log('✅ Q&A logged successfully');
     } catch (error) {
-      console.error('❌ Failed to log question and response:', error);
+      console.error('❌ Failed to log Q&A:', error);
     }
   }
 
@@ -1448,7 +1447,7 @@
           updateQuestionCounter();
           
           // Set this as the current question user needs to respond to
-          awaitingResponseTo = newQuestion;
+          currentAIQuestion = newQuestion;
           
           return true;
         }
@@ -1509,12 +1508,12 @@
     updateQuestionCounter();
     
     // Set this as the question user needs to respond to
-    awaitingResponseTo = newQuestion;
+    currentAIQuestion = newQuestion;
     
     return true;
   }
 
-  // FIXED SEND MESSAGE FUNCTION - Properly logs previous Q&A
+  // FIXED SEND MESSAGE FUNCTION - Logs Q&A properly
   async function sendMessage() {
     const message = input.value.trim();
     if (!message || interviewEnded) return;
@@ -1530,13 +1529,13 @@
       return;
     }
 
-    // FIXED: Log the PREVIOUS question that user just answered
-    if (awaitingResponseTo) {
-      console.log('📝 User answered question:', awaitingResponseTo.text);
+    // FIXED: Log the CURRENT question that user just answered
+    if (currentAIQuestion) {
+      console.log('📝 User answered question:', currentAIQuestion.text);
       console.log('👤 User response:', message);
       
-      await logQuestionAndResponse(awaitingResponseTo, message);
-      awaitingResponseTo = null; // Clear it after logging
+      await logQuestionResponse(currentAIQuestion, message);
+      currentAIQuestion = null; // Clear after logging
     }
 
     totalQuestionsAsked++;
