@@ -1386,6 +1386,8 @@
   }
 
   // FIXED AI INTERVIEWER FUNCTION - Better question tracking
+// Replace your callAIInterviewer function with this:
+
 async function callAIInterviewer(userMessage, isFirstMessage = false) {
   const loadingMessage = addMessage("AI is thinking...", "ai", false, false, true);
   
@@ -1396,7 +1398,6 @@ async function callAIInterviewer(userMessage, isFirstMessage = false) {
     });
   }
   
-  // DEBUG: Log the exact payload being sent
   const payload = {
     sessionId: sessionId,
     name: currentUser.name,
@@ -1427,8 +1428,8 @@ async function callAIInterviewer(userMessage, isFirstMessage = false) {
     });
 
     console.log('📡 RESPONSE STATUS:', response.status);
-    console.log('📡 RESPONSE HEADERS:', Object.fromEntries(response.headers.entries()));
 
+    // Remove loading message
     if (chat.contains(loadingMessage)) {
       chat.removeChild(loadingMessage);
     }
@@ -1437,29 +1438,43 @@ async function callAIInterviewer(userMessage, isFirstMessage = false) {
       const responseText = await response.text();
       console.log('📥 RAW RESPONSE:', responseText);
       
+      let data;
       try {
-        const data = JSON.parse(responseText);
+        data = JSON.parse(responseText);
         console.log('📥 PARSED RESPONSE:', data);
-        
-        if (data?.reply?.trim()?.length > 0) {
-          conversationHistory.push({
-            role: "assistant",
-            message: data.reply
-          });
-          
-          addMessage(data.reply, 'ai');
-          questionIndex++;
-          updateQuestionCounter();
-          return true;
-        } else {
-          console.error('❌ Empty or invalid reply in response:', data);
-          addMessage("❌ Received empty response from server. Please try again.", "ai");
-          return false;
-        }
       } catch (parseError) {
         console.error('❌ JSON Parse Error:', parseError);
-        console.error('❌ Response was not JSON:', responseText);
-        addMessage("❌ Server returned invalid response. Please try again.", "ai");
+        console.log('🔄 Treating as plain text response:', responseText);
+        
+        // If it's plain text, use it directly
+        if (responseText && responseText.trim().length > 0) {
+          data = { reply: responseText.trim() };
+        } else {
+          throw new Error('Empty response');
+        }
+      }
+      
+      // Extract reply from various possible formats
+      let reply = data.reply || data.response || data.message || data.output || data.text;
+      
+      // If data is a string itself, use it
+      if (!reply && typeof data === 'string') {
+        reply = data;
+      }
+      
+      if (reply && typeof reply === 'string' && reply.trim().length > 0) {
+        conversationHistory.push({
+          role: "assistant",
+          message: reply
+        });
+        
+        addMessage(reply, 'ai');
+        questionIndex++;
+        updateQuestionCounter();
+        return true;
+      } else {
+        console.error('❌ No valid reply in response:', data);
+        addMessage("❌ Received invalid response from server. Please try again.", "ai");
         return false;
       }
     } else {
