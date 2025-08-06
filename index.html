@@ -1422,7 +1422,7 @@ async function callAIInterviewer(userMessage, isFirstMessage = false) {
         interviewType: interviewType,
         step: isFirstMessage ? 'start_interview' : 'ongoing_interview',
         remainingTime: getRemainingTime(),
-        password: "dummy_password"
+        password: currentUser.password || "default_password"
       }),
       timeout: 15000
     });
