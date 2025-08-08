@@ -1639,7 +1639,11 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
   }
 
   // Start Interview Functions
-  async function startSkillBasedInterview() {
+ async function startSkillBasedInterview() {
+    console.log('=== START SKILL BASED INTERVIEW ===');
+    console.log('skill:', skill);
+    console.log('interviewType:', interviewType);
+    
     document.getElementById('userInfo').innerHTML = `Interview Mode: Skill-based (${skill})`;
     
     // Ask for level selection
@@ -1658,7 +1662,7 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
     buttonDiv.className = 'message ai';
     chat.appendChild(buttonDiv);
     chat.scrollTop = chat.scrollHeight;
-  }
+}
 
  async function selectLevel(selectedLevel) {
     level = selectedLevel;
