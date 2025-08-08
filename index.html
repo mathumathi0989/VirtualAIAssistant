@@ -1100,7 +1100,7 @@
     console.log('=== SELECTING INTERVIEW TYPE ===');
     console.log('Selected type:', type);
     
-   // Set the interview type FIRST
+    // Set the interview type FIRST
     interviewType = type;
     console.log('interviewType set to:', interviewType);
     
@@ -1117,13 +1117,13 @@
     }
   }
 
-  function resetInterviewState() {
+  function resetInterviewState(keepInterviewType = false) {
     // Clear all interview-related variables
     step = 0;
     skill = '';
     level = '';
-  if (!keepInterviewType) {
-        interviewType = ''; // Only reset if we want to
+    if (!keepInterviewType) {
+      interviewType = ''; // Only reset if we want to
     }
     resumeFile = null;
     resumeContent = '';
@@ -1164,8 +1164,7 @@
     if (interviewContainer.style.display === 'flex') {
       interviewContainer.style.display = 'none';
       
- 
-    resetInterviewState(true); // Keep interview type
+      resetInterviewState(true); // Keep interview type
       
       // Show the form based on interview type
       if (interviewType === 'resume') {
@@ -1186,7 +1185,7 @@
       // Show interview options
       document.getElementById('interviewOptions').style.display = 'flex';
       
-       resetInterviewState(false); 
+      resetInterviewState(false); 
       return;
     }
   }
@@ -1242,7 +1241,7 @@
   }
 
   async function startResumeInterview() {
-     console.log('=== START RESUME INTERVIEW ===');
+    console.log('=== START RESUME INTERVIEW ===');
     console.log('interviewType before processing:', interviewType);
 
     if (!resumeFile) {
@@ -1408,7 +1407,7 @@
 
   // Dynamic AI Interview Functions
   async function callAIInterviewer(userMessage, isFirstMessage = false) {
-     console.log('=== CALL AI INTERVIEWER DEBUG ===');
+    console.log('=== CALL AI INTERVIEWER DEBUG ===');
     console.log('interviewType at start of function:', interviewType);
     console.log('Current global state:', {
         interviewType: interviewType,
@@ -1443,7 +1442,7 @@
         remainingTime: getRemainingTime(),
         password: currentUser.password || null
     };
-  console.log('Request body interviewType:', requestBody.interviewType);
+    console.log('Request body interviewType:', requestBody.interviewType);
     console.log('Full request body:', requestBody);
 
     
@@ -1547,12 +1546,10 @@
         return false;
     }
 
-     // DEBUG: Add this logging
+    // DEBUG: Add this logging
     console.log('=== DEBUG REQUEST BODY ===');
     console.log('interviewType:', requestBody.interviewType);
     console.log('Full request body:', JSON.stringify(requestBody, null, 2));
-
-    
   }
 
   // Enhanced fallback response with better error handling
