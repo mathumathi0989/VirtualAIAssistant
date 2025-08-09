@@ -810,7 +810,7 @@
   let step = 0;
   let skill = '';
   let level = '';
-  let interviewType = '';
+  let interviewType = ''; // This is the main issue - it gets reset
   let resumeFile = null;
   let resumeContent = '';
   let jobDescription = '';
@@ -1096,35 +1096,37 @@
     document.getElementById('logoutBtn').style.display = 'block';
   }
 
+  // FIXED: Main issue was here - interviewType was getting reset
   function selectInterviewType(type) {
     console.log('=== SELECTING INTERVIEW TYPE ===');
     console.log('Selected type:', type);
     
-    // Set the interview type FIRST
+    // IMPORTANT: Set the interview type FIRST and PRESERVE it
     interviewType = type;
     console.log('interviewType set to:', interviewType);
     
-    // Reset state but keep the interview type
-    resetInterviewState(true); // Pass true to keep interviewType
+    // Reset OTHER state but KEEP the interview type
+    resetInterviewState();
     
     document.getElementById('interviewOptions').style.display = 'none';
     document.getElementById('backBtn').style.display = 'block';
     
     if (type === 'resume') {
       document.getElementById('resumeContainer').style.display = 'flex';
+      console.log('Showing resume container, interviewType:', interviewType);
     } else if (type === 'skill') {
       document.getElementById('skillContainer').style.display = 'flex';
+      console.log('Showing skill container, interviewType:', interviewType);
     }
   }
 
-  function resetInterviewState(keepInterviewType = false) {
-    // Clear all interview-related variables
+  // FIXED: Don't reset interviewType here unless explicitly requested
+  function resetInterviewState() {
+    // Clear all interview-related variables EXCEPT interviewType
     step = 0;
     skill = '';
     level = '';
-    if (!keepInterviewType) {
-      interviewType = ''; // Only reset if we want to
-    }
+    // DON'T reset interviewType here - it should persist
     resumeFile = null;
     resumeContent = '';
     jobDescription = '';
@@ -1151,7 +1153,7 @@
     // Clear chat
     if (chat) chat.innerHTML = '';
     
-    console.log('Interview state reset');
+    console.log('Interview state reset, interviewType preserved:', interviewType);
   }
 
   function goBack() {
@@ -1164,7 +1166,7 @@
     if (interviewContainer.style.display === 'flex') {
       interviewContainer.style.display = 'none';
       
-      resetInterviewState(true); // Keep interview type
+      resetInterviewState(); // This will preserve interviewType now
       
       // Show the form based on interview type
       if (interviewType === 'resume') {
@@ -1185,7 +1187,9 @@
       // Show interview options
       document.getElementById('interviewOptions').style.display = 'flex';
       
-      resetInterviewState(false); 
+      // NOW we can reset everything including interviewType
+      interviewType = '';
+      resetInterviewState();
       return;
     }
   }
@@ -1215,6 +1219,8 @@
     const fileInfo = document.getElementById('fileInfo');
     fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
     fileInfo.style.display = 'block';
+    
+    console.log('File uploaded, interviewType still:', interviewType);
   }
 
   // Helper function to convert file to text
@@ -1240,13 +1246,20 @@
     });
   }
 
+  // FIXED: Make sure interviewType is preserved
   async function startResumeInterview() {
     console.log('=== START RESUME INTERVIEW ===');
-    console.log('interviewType before processing:', interviewType);
+    console.log('interviewType at start:', interviewType);
 
     if (!resumeFile) {
       alert('Please upload your resume first.');
       return;
+    }
+
+    // ENSURE interviewType is set correctly
+    if (interviewType !== 'resume') {
+      console.log('ERROR: interviewType should be resume but is:', interviewType);
+      interviewType = 'resume'; // Force it to be correct
     }
 
     // Process the resume file
@@ -1254,27 +1267,34 @@
       resumeContent = await fileToText(resumeFile);
       jobDescription = document.getElementById('jobDescription').value.trim();
       
+      console.log('Resume processed, interviewType:', interviewType);
+      console.log('Resume content length:', resumeContent.length);
+      
       // Hide resume container and show interview container
       document.getElementById('resumeContainer').style.display = 'none';
       document.getElementById('interviewContainer').style.display = 'flex';
       
       // Start resume-based interview
-      startResumeBasedInterview();
+      await startResumeBasedInterview();
     } catch (error) {
       console.error('Error processing resume:', error);
       alert('Error processing resume file. Please try again.');
     }
   }
   
-function proceedToSkillLevel() {
+  function proceedToSkillLevel() {
     const skillInput = document.getElementById('skillInput').value.trim();
     if (!skillInput) {
         alert('Please enter a skill.');
         return;
     }
     
-    // IMPORTANT: Set the skill variable
+    // IMPORTANT: Set the skill variable AND ensure interviewType is correct
     skill = skillInput;
+    if (interviewType !== 'skill') {
+      console.log('ERROR: interviewType should be skill but is:', interviewType);
+      interviewType = 'skill'; // Force it to be correct
+    }
     
     console.log('=== PROCEED TO SKILL LEVEL DEBUG ===');
     console.log('Entered skill:', skillInput);
@@ -1286,7 +1306,7 @@ function proceedToSkillLevel() {
     document.getElementById('interviewContainer').style.display = 'flex';
     
     startSkillBasedInterview();
-}
+  }
 
   function resetInterview() {
     step = 0;
@@ -1411,7 +1431,7 @@ function proceedToSkillLevel() {
     return Math.max(0, 180 - elapsed);
   }
 
-  // Dynamic AI Interview Functions
+  // FIXED: Enhanced AI Interview Function with better debugging
   async function callAIInterviewer(userMessage, isFirstMessage = false) {
     console.log('=== CALL AI INTERVIEWER DEBUG ===');
     console.log('interviewType at start of function:', interviewType);
@@ -1420,9 +1440,16 @@ function proceedToSkillLevel() {
         skill: skill,
         level: level,
         resumeFile: resumeFile ? resumeFile.name : 'null',
-        jobDescription: jobDescription ? 'present' : 'null'
+        resumeContent: resumeContent ? resumeContent.length + ' chars' : 'null',
+        jobDescription: jobDescription ? jobDescription.length + ' chars' : 'null'
     });
 
+    // VALIDATION: Ensure we have the right interview type
+    if (!interviewType || (interviewType !== 'skill' && interviewType !== 'resume')) {
+      console.error('ERROR: Invalid interviewType:', interviewType);
+      addMessage('Error: Interview type not properly set. Please go back and try again.', 'ai');
+      return false;
+    }
     
     const loadingMessage = addMessage("AI is thinking...", "ai", false, false, true);
     
@@ -1434,62 +1461,57 @@ function proceedToSkillLevel() {
         });
     }
 
-    // Prepare the request body
-  let requestBody = {
-    sessionId: sessionId,
-    name: currentUser.name,
-    email: currentUser.email,
-    userMessage: userMessage || "",
-    questionIndex: questionIndex + 1,
-    totalQuestionsAsked: totalQuestionsAsked,
-    conversationHistory: JSON.stringify(conversationHistory),
-    interviewType: interviewType, // This should be set correctly
-    step: isFirstMessage ? 'start_interview' : 'ongoing_interview',
-    remainingTime: getRemainingTime(),
-    password: currentUser.password || null
-};
+    // Prepare the request body with explicit interview type handling
+    let requestBody = {
+      sessionId: sessionId,
+      name: currentUser.name,
+      email: currentUser.email,
+      userMessage: userMessage || "",
+      questionIndex: questionIndex + 1,
+      totalQuestionsAsked: totalQuestionsAsked,
+      conversationHistory: JSON.stringify(conversationHistory),
+      interviewType: interviewType, // This should now be correctly preserved
+      step: isFirstMessage ? 'start_interview' : 'ongoing_interview',
+      remainingTime: getRemainingTime(),
+      password: currentUser.password || null
+    };
 
-console.log('=== REQUEST BODY BUILDING DEBUG ===');
-console.log('interviewType:', interviewType);
-console.log('skill:', skill);
-console.log('level:', level);
+    console.log('=== REQUEST BODY BUILDING DEBUG ===');
+    console.log('Base interviewType:', requestBody.interviewType);
+    
+    // Add specific data based on interview type
+    if (interviewType === 'skill') {
+        console.log('=== BUILDING SKILL REQUEST ===');
+        requestBody.skill = skill || null;
+        requestBody.level = level || null;
+        requestBody.jobDescription = null;
+        requestBody.resumeContent = null;
+        requestBody.resumeFileName = null;
+        
+        console.log('Skill data added:', {
+            skill: requestBody.skill,
+            level: requestBody.level
+        });
+    } else if (interviewType === 'resume') {
+        console.log('=== BUILDING RESUME REQUEST ===');
+        requestBody.resumeContent = resumeContent || null;
+        requestBody.jobDescription = jobDescription || null;
+        requestBody.resumeFileName = resumeFile ? resumeFile.name : null;
+        requestBody.skill = null;
+        requestBody.level = null;
+        
+        console.log('Resume data added:', {
+            resumeContent: requestBody.resumeContent ? requestBody.resumeContent.length + ' chars' : 'null',
+            jobDescription: requestBody.jobDescription ? requestBody.jobDescription.length + ' chars' : 'null',
+            resumeFileName: requestBody.resumeFileName
+        });
+    }
 
-    
-   // Add skill-specific data for skill-based interviews
-if (interviewType === 'skill') {
-    console.log('=== BUILDING SKILL REQUEST ===');
-    requestBody.skill = skill || null;  // Ensure it's not undefined
-    requestBody.level = level || null;  // Ensure it's not undefined
-    requestBody.jobDescription = null;  // Explicitly null for skill interviews
-    requestBody.resumeContent = null;   // Explicitly null for skill interviews
-    requestBody.resumeFileName = null;  // Explicitly null for skill interviews
-    
-    console.log('Skill data added:', {
-        skill: requestBody.skill,
-        level: requestBody.level
-    });
-}
-  // Add resume-specific data for resume-based interviews
-if (interviewType === 'resume') {
-    console.log('=== BUILDING RESUME REQUEST ===');
-    requestBody.resumeContent = resumeContent || null;
-    requestBody.jobDescription = jobDescription || null;
-    requestBody.resumeFileName = resumeFile ? resumeFile.name : null;
-    requestBody.skill = null;           // Explicitly null for resume interviews
-    requestBody.level = null;           // Explicitly null for resume interviews
-    
-    console.log('Resume data added:', {
-        resumeContent: requestBody.resumeContent ? requestBody.resumeContent.length + ' chars' : 'null',
-        jobDescription: requestBody.jobDescription ? requestBody.jobDescription.length + ' chars' : 'null',
-        resumeFileName: requestBody.resumeFileName
-    });
-}
-
-  console.log('=== FINAL REQUEST BODY ===');
-console.log('interviewType:', requestBody.interviewType);
-console.log('skill:', requestBody.skill);
-console.log('level:', requestBody.level);
-console.log('Full request:', JSON.stringify(requestBody, null, 2));
+    console.log('=== FINAL REQUEST BODY ===');
+    console.log('interviewType:', requestBody.interviewType);
+    console.log('skill:', requestBody.skill);
+    console.log('level:', requestBody.level);
+    console.log('resumeFileName:', requestBody.resumeFileName);
     
     try {
         // Single fetch request to your n8n webhook
@@ -1509,7 +1531,7 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
 
         if (response.ok) {
             const data = await response.json();
-            console.log('AI Response:', data); // Debug logging
+            console.log('AI Response:', data);
             
             // Check if we have a valid response
             if (data && typeof data === 'object') {
@@ -1564,11 +1586,6 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
         
         return false;
     }
-
-    // DEBUG: Add this logging
-    console.log('=== DEBUG REQUEST BODY ===');
-    console.log('interviewType:', requestBody.interviewType);
-    console.log('Full request body:', JSON.stringify(requestBody, null, 2));
   }
 
   // Enhanced fallback response with better error handling
@@ -1639,10 +1656,17 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
   }
 
   // Start Interview Functions
- async function startSkillBasedInterview() {
+  async function startSkillBasedInterview() {
     console.log('=== START SKILL BASED INTERVIEW ===');
     console.log('skill:', skill);
     console.log('interviewType:', interviewType);
+    
+    // VALIDATION
+    if (interviewType !== 'skill') {
+      console.error('ERROR: Should be skill interview but interviewType is:', interviewType);
+      addMessage('Error: Interview type mismatch. Please go back and try again.', 'ai');
+      return;
+    }
     
     document.getElementById('userInfo').innerHTML = `Interview Mode: Skill-based (${skill})`;
     
@@ -1662,9 +1686,9 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
     buttonDiv.className = 'message ai';
     chat.appendChild(buttonDiv);
     chat.scrollTop = chat.scrollHeight;
-}
+  }
 
- async function selectLevel(selectedLevel) {
+  async function selectLevel(selectedLevel) {
     level = selectedLevel;
     
     console.log('=== SELECT LEVEL DEBUG ===');
@@ -1692,9 +1716,21 @@ console.log('Full request:', JSON.stringify(requestBody, null, 2));
     
     // Start the interview with AI
     await callAIInterviewer("", true); // First message - no user input yet
-}
+  }
 
   async function startResumeBasedInterview() {
+    console.log('=== START RESUME BASED INTERVIEW ===');
+    console.log('interviewType:', interviewType);
+    console.log('resumeContent length:', resumeContent ? resumeContent.length : 0);
+    console.log('jobDescription length:', jobDescription ? jobDescription.length : 0);
+    
+    // VALIDATION
+    if (interviewType !== 'resume') {
+      console.error('ERROR: Should be resume interview but interviewType is:', interviewType);
+      addMessage('Error: Interview type mismatch. Please go back and try again.', 'ai');
+      return;
+    }
+    
     const jobDesc = jobDescription ? ' and job description' : '';
     document.getElementById('userInfo').innerHTML = `Interview Mode: Resume-based${jobDesc}`;
     
