@@ -1007,17 +1007,17 @@
     if (isFirstMessage) {
         response = "Hello! I've reviewed your resume and I'm excited to learn more about your experience. Can you tell me about your most significant project and the key challenges you overcame?";
     } else {
-        // Follow-up questions for when AI service is down
-        const fallbackQuestions = [
-            "That's helpful. Can you explain your approach to problem-solving in your field?",
-            "Interesting. What technologies or tools do you consider essential in your work?",
-            "Good point. How do you handle working under pressure or tight deadlines?",
-            "Thanks for sharing. Can you describe a time you had to learn something new quickly?",
-            "Thank you for your responses. What motivates you most in your professional work?"
-        ];
+        // // Follow-up questions for when AI service is down
+        // const fallbackQuestions = [
+        //     "That's helpful. Can you explain your approach to problem-solving in your field?",
+        //     "Interesting. What technologies or tools do you consider essential in your work?",
+        //     "Good point. How do you handle working under pressure or tight deadlines?",
+        //     "Thanks for sharing. Can you describe a time you had to learn something new quickly?",
+        //     "Thank you for your responses. What motivates you most in your professional work?"
+        // ];
         
-        const questionIdx = Math.min(totalQuestionsAsked - 1, fallbackQuestions.length - 1);
-        response = fallbackQuestions[questionIdx];
+        // const questionIdx = Math.min(totalQuestionsAsked - 1, fallbackQuestions.length - 1);
+        // response = fallbackQuestions[questionIdx];
     }
     
     // Add AI response to conversation history
