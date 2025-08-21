@@ -271,11 +271,6 @@
     </div>
     
     <div class="form-group">
-      <label for="jobTitle">Job Title *</label>
-      <input type="text" id="jobTitle" placeholder="e.g. Software Engineer, Data Analyst..." required>
-    </div>
-    
-    <div class="form-group">
       <label for="jobDescription">Job Description (Optional)</label>
       <textarea id="jobDescription" placeholder="Paste the job description here..."></textarea>
     </div>
@@ -327,7 +322,6 @@
 
   let resumeFile = null;
   let resumeContent = '';
-  let jobTitle = '';
   let jobDescription = '';
   let interviewStartTime = null;
   let interviewEnded = false;
@@ -403,15 +397,8 @@
       return;
     }
 
-    const jobTitleValue = document.getElementById('jobTitle').value.trim();
-    if (!jobTitleValue) {
-      alert('Please enter the job title.');
-      return;
-    }
-
     try {
       resumeContent = await fileToText(resumeFile);
-      jobTitle = jobTitleValue;
       jobDescription = document.getElementById('jobDescription').value.trim();
       
       showSection('interviewTypeSection');
@@ -546,14 +533,13 @@
   // AI Integration
   async function callAIInterviewer(userMessage, isFirstMessage = false) {
     console.log('=== CALL AI INTERVIEWER ===');
-    console.log('Job title:', jobTitle);
     console.log('Resume content length:', resumeContent ? resumeContent.length : 0);
 
     const loadingMessage = addMessage("AI is thinking...", "ai", false, true);
     
     let requestBody = {
       body: {
-        jobTitle: jobTitle,
+        jobTitle: '',
         resumeText: resumeContent,
         jobDescription: jobDescription || '',
         conversationHistory: conversationHistory,
@@ -587,8 +573,6 @@
       if (response.ok) {
         const data = await response.json();
         console.log('AI Response:', data);
-        
-       // addDebugMessage('API Response', data);
         
         let aiReply = '';
         let newConversationHistory = '';
@@ -643,7 +627,7 @@
     let response;
     
     if (isFirstMessage) {
-      response = `Hello! I've reviewed your resume for the ${jobTitle} position. Can you tell me about your most significant project and the key challenges you overcame?`;
+      response = `Hello! I've reviewed your resume and I'm ready to conduct an interview. Can you tell me about your most significant project and the key challenges you overcame?`;
     } else {
       const fallbackQuestions = [
         "Can you explain your approach to problem-solving?",
@@ -690,9 +674,9 @@
   async function startResumeBasedInterview() {
     console.log('=== START INTERVIEW ===');
     
-    document.getElementById('userInfo').innerHTML = `Interview for: ${jobTitle}`;
+    document.getElementById('userInfo').innerHTML = `Resume-based Interview`;
     
-    addMessage("I'll conduct an interview based on your resume and the role requirements.", 'ai');
+    addMessage("I'll conduct an interview based on your resume and any job description you provided.", 'ai');
     addMessage("Starting the timer now...", 'ai');
     
     startInterviewTimer();
