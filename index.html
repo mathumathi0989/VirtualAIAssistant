@@ -266,6 +266,49 @@
             }
         }
     </style>
+
+
+    <script src="https://apis.google.com/js/api.js"></script>
+<script>
+  function initClient() {
+    gapi.load('client:auth2', () => {
+      gapi.client.init({
+        apiKey: "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",
+        clientId: "83363015189-9vkp2sf0a9rkfcn1lqe24f2t0dnlkhp8.apps.googleusercontent.com",
+        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+        scope: "https://www.googleapis.com/auth/drive.file"
+      }).then(() => {
+        console.log("Google API initialized");
+      });
+    });
+  }
+  window.onload = initClient;
+
+  async function uploadToDrive(file) {
+    const accessToken = gapi.auth.getToken().access_token;
+
+    const metadata = {
+      name: file.name,
+      mimeType: file.type,
+      parents: ["1iN-FrhSPOFZzYJJjNJ_6UD0nFOIlEBEc"] // make a folder in Drive
+    };
+
+    const form = new FormData();
+    form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+    form.append("file", file);
+
+    const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
+      method: "POST",
+      headers: new Headers({ "Authorization": "Bearer " + accessToken }),
+      body: form
+    });
+
+    const data = await res.json();
+    return data.id; // Google Drive fileId
+  }
+</script>
+
+    
 </head>
 <body>
     <div class="chat-container">
@@ -368,72 +411,67 @@
             timerInterval = setInterval(updateTimer, 1000);
         }
         
-        async function startInterview() {
-            const resumeFile = document.getElementById('resumeFile').files[0];
-            const jobDescription = document.getElementById('jobDescription').value.trim();
-            const startBtn = document.getElementById('startBtn');
-            
-            if (!resumeFile) {
-                showFileStatus('resumeStatus', 'Please select a PDF resume file', 'error');
-                return;
-            }
-            
-            if (resumeFile.type !== 'application/pdf') {
-                showFileStatus('resumeStatus', 'Please upload a PDF file only', 'error');
-                return;
-            }
-            
-            startBtn.disabled = true;
-            startBtn.textContent = 'Processing...';
-            
-            try {
-                // Create FormData for file upload
-                const formData = new FormData();
-                formData.append('resume', resumeFile);
-                formData.append('sessionId', sessionId);
-                formData.append('resume', fileInput.files[0]);
-                if (jobDescription) {
-                    formData.append('jobDescription', jobDescription);
-                }
-                
-                showTypingIndicator();
-                
-                // Upload resume and start interview
-                const response = await fetch(UPLOAD_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                hideTypingIndicator();
-                
-                if (!response.ok) {
-                    throw new Error('Failed to start interview');
-                }
-                
-                const data = await response.json();
-                
-                // Hide upload section and show chat input
-                document.getElementById('uploadSection').style.display = 'none';
-                document.getElementById('chatInput').style.display = 'block';
-                
-                // Add first question
-                addMessage(data.question || "Let's begin! Tell me about yourself and your background.");
-                
-                // Start timer
-                startTimer();
-                interviewStarted = true;
-                
-                // Focus on input
-                document.getElementById('messageInput').focus();
-                
-            } catch (error) {
-                hideTypingIndicator();
-                console.error('Error starting interview:', error);
-                addMessage('❌ Sorry, there was an error starting the interview. Please try again.', false);
-                startBtn.disabled = false;
-                startBtn.textContent = 'Start Interview 🚀';
-            }
-        }
+       async function startInterview() {
+    const resumeFile = document.getElementById('resumeFile').files[0];
+    const jobDescription = document.getElementById('jobDescription').value.trim();
+    const startBtn = document.getElementById('startBtn');
+
+    if (!resumeFile) {
+        showFileStatus('resumeStatus', 'Please select a PDF resume file', 'error');
+        return;
+    }
+
+    if (resumeFile.type !== 'application/pdf') {
+        showFileStatus('resumeStatus', 'Please upload a PDF file only', 'error');
+        return;
+    }
+
+    startBtn.disabled = true;
+    startBtn.textContent = 'Uploading...';
+
+    try {
+        // 1️⃣ Upload to Google Drive
+        const fileId = await uploadToDrive(resumeFile);
+        console.log("Uploaded to Drive, fileId:", fileId);
+
+        // 2️⃣ Call your webhook with fileId + sessionId
+        showTypingIndicator();
+        const response = await fetch(UPLOAD_URL, {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                sessionId: sessionId,
+                fileId: fileId,
+                jobDescription: jobDescription
+            })
+        });
+
+        hideTypingIndicator();
+
+        if (!response.ok) throw new Error('Failed to start interview');
+        const data = await response.json();
+
+        // Hide upload section and show chat input
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('chatInput').style.display = 'block';
+
+        // Add first question
+        addMessage(data.question || "Let's begin! Tell me about yourself and your background.");
+
+        // Start timer
+        startTimer();
+        interviewStarted = true;
+        document.getElementById('messageInput').focus();
+
+    } catch (error) {
+        hideTypingIndicator();
+        console.error('Error starting interview:', error);
+        addMessage('❌ Sorry, there was an error starting the interview. Please try again.', false);
+        startBtn.disabled = false;
+        startBtn.textContent = 'Start Interview 🚀';
+    }
+}
+
         
         async function sendMessage() {
             if (!interviewStarted || timeRemaining <= 0) return;
