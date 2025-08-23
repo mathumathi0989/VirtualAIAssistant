@@ -391,7 +391,7 @@
                 const formData = new FormData();
                 formData.append('resume', resumeFile);
                 formData.append('sessionId', sessionId);
-                
+                formData.append('resume', fileInput.files[0]);
                 if (jobDescription) {
                     formData.append('jobDescription', jobDescription);
                 }
