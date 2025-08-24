@@ -480,11 +480,19 @@
                 try {
                     const responseText = await response.text();
                     addDebugMessage("📨 Raw response: " + responseText);
+                    addDebugMessage("📨 Response length: " + responseText.length + " characters");
+                    addDebugMessage("📨 Response type: " + typeof responseText);
+                    
+                    if (!responseText || responseText.trim() === '') {
+                        throw new Error('Empty response from server');
+                    }
+                    
                     data = JSON.parse(responseText);
                     addDebugMessage("✅ Parsed response: " + JSON.stringify(data));
                 } catch (parseError) {
                     addDebugMessage("❌ JSON parse error: " + parseError.message);
-                    throw new Error('Invalid JSON response from server');
+                    addDebugMessage("❌ Problematic response: '" + responseText + "'");
+                    throw new Error('Invalid JSON response from server. Raw response: ' + responseText.substring(0, 200));
                 }
 
                 // Success! Continue with interview
@@ -539,6 +547,12 @@
                 
                 const responseText = await response.text();
                 addDebugMessage("📨 Raw response: " + responseText);
+                addDebugMessage("📨 Response length: " + responseText.length + " characters");
+                
+                if (!responseText || responseText.trim() === '') {
+                    throw new Error('Empty response from server');
+                }
+                
                 const data = JSON.parse(responseText);
                 addDebugMessage("✅ Parsed response: " + JSON.stringify(data));
 
