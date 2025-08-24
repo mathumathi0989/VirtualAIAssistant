@@ -347,6 +347,10 @@
                     Start Interview 🚀
                 </button>
                 
+                <button class="start-btn" id="testBtn" onclick="testWebhook()" style="background: #28a745; margin-left: 10px;">
+                    Test Webhook 🔧
+                </button>
+                
                 <div class="debug-info" id="debugInfo"></div>
             </div>
         </div>
@@ -441,28 +445,20 @@
             addDebugMessage("🚀 Starting interview process...");
 
             try {
-                // 1️⃣ Upload to Google Drive
-                addDebugMessage("📤 Step 1: Uploading to Google Drive...");
-                const fileId = await uploadToDrive(resumeFile);
-                addDebugMessage("✅ Step 1 complete. File ID: " + fileId);
-
-                // 2️⃣ Call webhook with detailed logging
-                addDebugMessage("📞 Step 2: Calling n8n webhook...");
-                const payload = {
-                    sessionId: sessionId,
-                    resume: fileId,
-                    jobDescription: jobDescription
-                };
-                addDebugMessage("📦 Payload: " + JSON.stringify(payload));
-
+                // Method 1: Try direct file upload to n8n (bypassing Google Drive)
+                addDebugMessage("📤 Method 1: Trying direct file upload to n8n...");
+                
+                const formData = new FormData();
+                formData.append('sessionId', sessionId);
+                formData.append('resume', resumeFile);
+                formData.append('jobDescription', jobDescription);
+                
+                addDebugMessage("📦 FormData created with file: " + resumeFile.name);
+                
                 showTypingIndicator();
                 const response = await fetch(UPLOAD_URL, {
                     method: 'POST',
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(payload)
+                    body: formData  // Send as multipart/form-data
                 });
 
                 addDebugMessage("📨 Response status: " + response.status);
@@ -472,8 +468,12 @@
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    addDebugMessage("❌ Response error: " + errorText);
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    addDebugMessage("❌ Method 1 failed: " + errorText);
+                    
+                    // Method 2: Try the mock Google Drive method
+                    addDebugMessage("📤 Method 2: Trying mock Google Drive method...");
+                    await tryGoogleDriveMethod(resumeFile, jobDescription, startBtn);
+                    return;
                 }
                 
                 let data;
@@ -487,19 +487,8 @@
                     throw new Error('Invalid JSON response from server');
                 }
 
-                // Hide upload section and show chat input
-                document.getElementById('uploadSection').style.display = 'none';
-                document.getElementById('chatInput').style.display = 'block';
-
-                // Add first question
-                const question = data.question || "Let's begin! Tell me about yourself and your background.";
-                addMessage(question);
-                addDebugMessage("✅ Interview started successfully");
-
-                // Start timer
-                startTimer();
-                interviewStarted = true;
-                document.getElementById('messageInput').focus();
+                // Success! Continue with interview
+                setupInterviewUI(data);
 
             } catch (error) {
                 hideTypingIndicator();
@@ -512,6 +501,72 @@
                 startBtn.disabled = false;
                 startBtn.textContent = 'Start Interview 🚀';
             }
+        }
+        
+        async function tryGoogleDriveMethod(resumeFile, jobDescription, startBtn) {
+            try {
+                addDebugMessage("📤 Step 1: Mock uploading to Google Drive...");
+                const fileId = await uploadToDrive(resumeFile);
+                addDebugMessage("✅ Step 1 complete. File ID: " + fileId);
+
+                // 2️⃣ Call webhook with JSON payload
+                addDebugMessage("📞 Step 2: Calling n8n webhook with JSON...");
+                const payload = {
+                    sessionId: sessionId,
+                    resume: fileId,
+                    jobDescription: jobDescription
+                };
+                addDebugMessage("📦 JSON Payload: " + JSON.stringify(payload));
+
+                showTypingIndicator();
+                const response = await fetch(UPLOAD_URL, {
+                    method: 'POST',
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                addDebugMessage("📨 Response status: " + response.status);
+                hideTypingIndicator();
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addDebugMessage("❌ Method 2 failed: " + errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const responseText = await response.text();
+                addDebugMessage("📨 Raw response: " + responseText);
+                const data = JSON.parse(responseText);
+                addDebugMessage("✅ Parsed response: " + JSON.stringify(data));
+
+                // Success! Continue with interview
+                setupInterviewUI(data);
+                
+            } catch (error) {
+                hideTypingIndicator();
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Interview 🚀';
+                throw error;
+            }
+        }
+        
+        function setupInterviewUI(data) {
+            // Hide upload section and show chat input
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('chatInput').style.display = 'block';
+
+            // Add first question
+            const question = data.question || "Let's begin! Tell me about yourself and your background.";
+            addMessage(question);
+            addDebugMessage("✅ Interview started successfully");
+
+            // Start timer
+            startTimer();
+            interviewStarted = true;
+            document.getElementById('messageInput').focus();
         }
         
         async function sendMessage() {
@@ -641,6 +696,54 @@
         // Add initial debug info
         addDebugMessage("🔧 Debug mode enabled");
         addDebugMessage("🌐 API Base: " + API_BASE);
+        
+        // Test webhook function
+        async function testWebhook() {
+            addDebugMessage("🔧 Testing webhook connectivity...");
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+            
+            try {
+                const testPayload = {
+                    sessionId: "test_" + Date.now(),
+                    resume: "test_file_id_123",
+                    jobDescription: "Test job description"
+                };
+                
+                addDebugMessage("📦 Test payload: " + JSON.stringify(testPayload));
+                
+                const response = await fetch(UPLOAD_URL, {
+                    method: 'POST',
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                addDebugMessage("📨 Webhook test response status: " + response.status);
+                addDebugMessage("📨 Response headers: " + JSON.stringify(Object.fromEntries(response.headers.entries())));
+                
+                const responseText = await response.text();
+                addDebugMessage("📨 Raw response: " + responseText);
+                
+                if (response.ok) {
+                    addDebugMessage("✅ Webhook is working!");
+                    addMessage("✅ <strong>Webhook Test Successful!</strong><br>Your n8n workflow is responding correctly.", false);
+                } else {
+                    addDebugMessage("❌ Webhook returned error: " + response.status);
+                    addMessage("❌ <strong>Webhook Test Failed</strong><br>Status: " + response.status + "<br>Response: " + responseText, false);
+                }
+                
+            } catch (error) {
+                addDebugMessage("❌ Webhook test error: " + error.message);
+                addMessage("❌ <strong>Webhook Connection Failed</strong><br>Error: " + error.message + "<br><br>This means your n8n webhook is not reachable.", false);
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = 'Test Webhook 🔧';
+            }
+        }
     </script>
 </body>
 </html>
