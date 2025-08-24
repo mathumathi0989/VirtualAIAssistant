@@ -286,67 +286,25 @@
         }
     </style>
 
-    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Skip Google Drive for now, use direct file upload -->
     <script>
+      // Temporarily bypass Google Drive upload for testing
       function initClient() {
-        gapi.load('client:auth2', () => {
-          gapi.client.init({
-            apiKey: "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",
-            clientId: "83363015189-9vkp2sf0a9rkfcn1lqe24f2t0dnlkhp8.apps.googleusercontent.com",
-            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-            scope: "https://www.googleapis.com/auth/drive.file"
-          }).then(() => {
-            console.log("Google API initialized");
-            addDebugMessage("✅ Google API initialized successfully");
-          }).catch(error => {
-            console.error("Google API init error:", error);
-            addDebugMessage("❌ Google API init error: " + error.message);
-          });
-        });
+        addDebugMessage("🔧 Bypassing Google Drive for testing");
+        addDebugMessage("✅ Ready to test direct file upload to n8n");
       }
       window.onload = initClient;
 
       async function uploadToDrive(file) {
-        try {
-          // Check if user is signed in
-          const authInstance = gapi.auth2.getAuthInstance();
-          if (!authInstance.isSignedIn.get()) {
-            addDebugMessage("🔐 User not signed in, attempting sign in...");
-            await authInstance.signIn();
-          }
-
-          const accessToken = authInstance.currentUser.get().getAuthResponse().access_token;
-          addDebugMessage("🔑 Got access token: " + accessToken.substring(0, 20) + "...");
-
-          const metadata = {
-            name: file.name,
-            mimeType: file.type,
-            parents: ["1iN-FrhSPOFZzYJJjNJ_6UD0nFOIlEBEc"] // Your folder ID
-          };
-
-          const form = new FormData();
-          form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
-          form.append("file", file);
-
-          addDebugMessage("📤 Uploading to Google Drive...");
-          const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType", {
-            method: "POST",
-            headers: new Headers({ "Authorization": "Bearer " + accessToken }),
-            body: form
-          });
-
-          if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Upload failed: ${res.status} - ${errorText}`);
-          }
-
-          const data = await res.json();
-          addDebugMessage("✅ Upload successful. File ID: " + data.id);
-          return data.id;
-        } catch (error) {
-          addDebugMessage("❌ Drive upload error: " + error.message);
-          throw error;
-        }
+        // For testing, we'll send the file directly to n8n
+        // This bypasses Google Drive authentication issues
+        addDebugMessage("🔧 Testing mode: Skipping Google Drive");
+        addDebugMessage("📤 Creating mock file ID for testing...");
+        
+        // Create a mock file ID for testing
+        const mockFileId = "test_file_" + Date.now();
+        addDebugMessage("✅ Mock file ID created: " + mockFileId);
+        return mockFileId;
       }
 
       function addDebugMessage(message) {
