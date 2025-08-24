@@ -553,31 +553,46 @@
              const responseText = await response.text();
 addDebugMessage("Raw chat response: " + responseText);
 
-let data = JSON.parse(responseText);
+let data;
+try {
+    data = JSON.parse(responseText);
+} catch (parseError) {
+    addDebugMessage("JSON parse error: " + parseError.message);
+    throw new Error('Invalid JSON response from n8n');
+}
 
 // Handle array response from n8n
 if (Array.isArray(data) && data.length > 0) {
-    data = data[0]; // Get first item from array
+    data = data[0];
     addDebugMessage("Using first array item: " + JSON.stringify(data));
 }
 
-// Add AI response
+// Add AI response - check multiple possible response fields
 if (data.response) {
     addMessage(data.response);
-    addDebugMessage("Added AI message: " + data.response);
+    addDebugMessage("Added AI message from response field: " + data.response);
+} else if (data.output) {
+    addMessage(data.output);
+    addDebugMessage("Added AI message from output field: " + data.output);
+} else if (data.text) {
+    addMessage(data.text);
+    addDebugMessage("Added AI message from text field: " + data.text);
+} else if (typeof data === 'string') {
+    addMessage(data);
+    addDebugMessage("Added AI message from string response: " + data);
 } else {
     addMessage("I'm having trouble processing your response. Could you please try again?");
     addDebugMessage("No response field found in: " + JSON.stringify(data));
 }
-                
+        
             } catch (error) {
-                hideTypingIndicator();
-                addDebugMessage("Chat error: " + error.message);
-                addMessage('Sorry, there was an error. Please try again.');
-            } finally {
-                sendBtn.disabled = false;
-                messageInput.focus();
-            }
+    hideTypingIndicator();
+    addDebugMessage("Chat error: " + error.message);
+    addMessage('Sorry, there was an error. Please try again.');
+} finally {
+    sendBtn.disabled = false;
+    messageInput.focus();
+}
         }
         
         function showFileStatus(elementId, message, type) {
