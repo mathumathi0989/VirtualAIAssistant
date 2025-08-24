@@ -477,8 +477,9 @@
                 }
                 
                 let data;
+                let responseText = '';
                 try {
-                    const responseText = await response.text();
+                    responseText = await response.text();
                     addDebugMessage("📨 Raw response: " + responseText);
                     addDebugMessage("📨 Response length: " + responseText.length + " characters");
                     addDebugMessage("📨 Response type: " + typeof responseText);
@@ -501,6 +502,7 @@
             } catch (error) {
                 hideTypingIndicator();
                 addDebugMessage("❌ Error in startInterview: " + error.message);
+                addDebugMessage("❌ Error stack: " + error.stack);
                 console.error('Error starting interview:', error);
                 
                 // Show detailed error to user
@@ -545,19 +547,26 @@
                     throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
                 
-                const responseText = await response.text();
-                addDebugMessage("📨 Raw response: " + responseText);
-                addDebugMessage("📨 Response length: " + responseText.length + " characters");
-                
-                if (!responseText || responseText.trim() === '') {
-                    throw new Error('Empty response from server');
+                let responseText = '';
+                try {
+                    responseText = await response.text();
+                    addDebugMessage("📨 Raw response: " + responseText);
+                    addDebugMessage("📨 Response length: " + responseText.length + " characters");
+                    
+                    if (!responseText || responseText.trim() === '') {
+                        throw new Error('Empty response from server');
+                    }
+                    
+                    const data = JSON.parse(responseText);
+                    addDebugMessage("✅ Parsed response: " + JSON.stringify(data));
+                    
+                    // Success! Continue with interview
+                    setupInterviewUI(data);
+                } catch (parseError) {
+                    addDebugMessage("❌ JSON parse error: " + parseError.message);
+                    addDebugMessage("❌ Problematic response: '" + responseText + "'");
+                    throw new Error('Invalid JSON response from server. Raw response: ' + responseText.substring(0, 200));
                 }
-                
-                const data = JSON.parse(responseText);
-                addDebugMessage("✅ Parsed response: " + JSON.stringify(data));
-
-                // Success! Continue with interview
-                setupInterviewUI(data);
                 
             } catch (error) {
                 hideTypingIndicator();
