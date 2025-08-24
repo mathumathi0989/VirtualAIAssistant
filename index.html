@@ -550,15 +550,25 @@
                     throw new Error(`Chat failed: ${response.status}`);
                 }
                 
-                const responseText = await response.text();
-                const data = JSON.parse(responseText);
-                
-                // Add AI response
-                if (data.response) {
-                    addMessage(data.response);
-                } else {
-                    addMessage("I'm having trouble processing your response. Could you please try again?");
-                }
+             const responseText = await response.text();
+addDebugMessage("Raw chat response: " + responseText);
+
+let data = JSON.parse(responseText);
+
+// Handle array response from n8n
+if (Array.isArray(data) && data.length > 0) {
+    data = data[0]; // Get first item from array
+    addDebugMessage("Using first array item: " + JSON.stringify(data));
+}
+
+// Add AI response
+if (data.response) {
+    addMessage(data.response);
+    addDebugMessage("Added AI message: " + data.response);
+} else {
+    addMessage("I'm having trouble processing your response. Could you please try again?");
+    addDebugMessage("No response field found in: " + JSON.stringify(data));
+}
                 
             } catch (error) {
                 hideTypingIndicator();
