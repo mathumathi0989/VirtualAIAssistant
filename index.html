@@ -94,6 +94,12 @@
             border-bottom-right-radius: 6px;
         }
         
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        
         .upload-section {
             background: #f8f9fa;
             padding: 30px;
@@ -253,6 +259,19 @@
             border: 1px solid #f5c6cb;
         }
         
+        .debug-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
         @media (max-width: 768px) {
             .chat-container {
                 height: 100vh;
@@ -267,48 +286,78 @@
         }
     </style>
 
-
     <script src="https://apis.google.com/js/api.js"></script>
-<script>
-  function initClient() {
-    gapi.load('client:auth2', () => {
-      gapi.client.init({
-        apiKey: "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",
-        clientId: "83363015189-9vkp2sf0a9rkfcn1lqe24f2t0dnlkhp8.apps.googleusercontent.com",
-        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-        scope: "https://www.googleapis.com/auth/drive.file"
-      }).then(() => {
-        console.log("Google API initialized");
-      });
-    });
-  }
-  window.onload = initClient;
+    <script>
+      function initClient() {
+        gapi.load('client:auth2', () => {
+          gapi.client.init({
+            apiKey: "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",
+            clientId: "83363015189-9vkp2sf0a9rkfcn1lqe24f2t0dnlkhp8.apps.googleusercontent.com",
+            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+            scope: "https://www.googleapis.com/auth/drive.file"
+          }).then(() => {
+            console.log("Google API initialized");
+            addDebugMessage("✅ Google API initialized successfully");
+          }).catch(error => {
+            console.error("Google API init error:", error);
+            addDebugMessage("❌ Google API init error: " + error.message);
+          });
+        });
+      }
+      window.onload = initClient;
 
-  async function uploadToDrive(file) {
-    const accessToken = gapi.auth.getToken().access_token;
+      async function uploadToDrive(file) {
+        try {
+          // Check if user is signed in
+          const authInstance = gapi.auth2.getAuthInstance();
+          if (!authInstance.isSignedIn.get()) {
+            addDebugMessage("🔐 User not signed in, attempting sign in...");
+            await authInstance.signIn();
+          }
 
-    const metadata = {
-      name: file.name,
-      mimeType: file.type,
-      parents: ["1iN-FrhSPOFZzYJJjNJ_6UD0nFOIlEBEc"] // make a folder in Drive
-    };
+          const accessToken = authInstance.currentUser.get().getAuthResponse().access_token;
+          addDebugMessage("🔑 Got access token: " + accessToken.substring(0, 20) + "...");
 
-    const form = new FormData();
-    form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
-    form.append("file", file);
+          const metadata = {
+            name: file.name,
+            mimeType: file.type,
+            parents: ["1iN-FrhSPOFZzYJJjNJ_6UD0nFOIlEBEc"] // Your folder ID
+          };
 
-    const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
-      method: "POST",
-      headers: new Headers({ "Authorization": "Bearer " + accessToken }),
-      body: form
-    });
+          const form = new FormData();
+          form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+          form.append("file", file);
 
-    const data = await res.json();
-    return data.id; // Google Drive fileId
-  }
-</script>
+          addDebugMessage("📤 Uploading to Google Drive...");
+          const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType", {
+            method: "POST",
+            headers: new Headers({ "Authorization": "Bearer " + accessToken }),
+            body: form
+          });
 
-    
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Upload failed: ${res.status} - ${errorText}`);
+          }
+
+          const data = await res.json();
+          addDebugMessage("✅ Upload successful. File ID: " + data.id);
+          return data.id;
+        } catch (error) {
+          addDebugMessage("❌ Drive upload error: " + error.message);
+          throw error;
+        }
+      }
+
+      function addDebugMessage(message) {
+        const debugDiv = document.getElementById('debugInfo');
+        if (debugDiv) {
+          debugDiv.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+          debugDiv.scrollTop = debugDiv.scrollHeight;
+        }
+        console.log(message);
+      }
+    </script>
 </head>
 <body>
     <div class="chat-container">
@@ -321,7 +370,8 @@
         <div class="chat-messages" id="chatMessages">
             <div class="message ai">
                 <strong>Hi there! 👋</strong><br>
-                </div>
+                I'm your AI interview assistant. Upload your resume to get started with a personalized mock interview.
+            </div>
             
             <div class="upload-section" id="uploadSection">
                 <div class="file-input-group">
@@ -338,6 +388,8 @@
                 <button class="start-btn" id="startBtn" onclick="startInterview()">
                     Start Interview 🚀
                 </button>
+                
+                <div class="debug-info" id="debugInfo"></div>
             </div>
         </div>
         
@@ -361,6 +413,7 @@
         
         // Initialize session ID
         sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        addDebugMessage("🆔 Session ID: " + sessionId);
         
         function addMessage(content, isUser = false) {
             const messagesDiv = document.getElementById('chatMessages');
@@ -410,67 +463,98 @@
             timerInterval = setInterval(updateTimer, 1000);
         }
         
-       async function startInterview() {
-    const resumeFile = document.getElementById('resumeFile').files[0];
-    const jobDescription = document.getElementById('jobDescription').value.trim();
-    const startBtn = document.getElementById('startBtn');
+        async function startInterview() {
+            const resumeFile = document.getElementById('resumeFile').files[0];
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            const startBtn = document.getElementById('startBtn');
 
-    if (!resumeFile) {
-        showFileStatus('resumeStatus', 'Please select a PDF resume file', 'error');
-        return;
-    }
+            if (!resumeFile) {
+                showFileStatus('resumeStatus', 'Please select a PDF resume file', 'error');
+                return;
+            }
 
-    if (resumeFile.type !== 'application/pdf') {
-        showFileStatus('resumeStatus', 'Please upload a PDF file only', 'error');
-        return;
-    }
+            if (resumeFile.type !== 'application/pdf') {
+                showFileStatus('resumeStatus', 'Please upload a PDF file only', 'error');
+                return;
+            }
 
-    startBtn.disabled = true;
-    startBtn.textContent = 'Uploading...';
+            startBtn.disabled = true;
+            startBtn.textContent = 'Processing...';
+            addDebugMessage("🚀 Starting interview process...");
 
-    try {
-        // 1️⃣ Upload to Google Drive
-        const fileId = await uploadToDrive(resumeFile);
-        console.log("Uploaded to Drive, fileId:", fileId);
+            try {
+                // 1️⃣ Upload to Google Drive
+                addDebugMessage("📤 Step 1: Uploading to Google Drive...");
+                const fileId = await uploadToDrive(resumeFile);
+                addDebugMessage("✅ Step 1 complete. File ID: " + fileId);
 
-        // 2️⃣ Call your webhook with fileId + sessionId
-        showTypingIndicator();
-        const response = await fetch(UPLOAD_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                sessionId: sessionId,
-                resume: fileId,
-                jobDescription: jobDescription
-            })
-        });
+                // 2️⃣ Call webhook with detailed logging
+                addDebugMessage("📞 Step 2: Calling n8n webhook...");
+                const payload = {
+                    sessionId: sessionId,
+                    resume: fileId,
+                    jobDescription: jobDescription
+                };
+                addDebugMessage("📦 Payload: " + JSON.stringify(payload));
 
-        hideTypingIndicator();
+                showTypingIndicator();
+                const response = await fetch(UPLOAD_URL, {
+                    method: 'POST',
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-        if (!response.ok) throw new Error('Failed to start interview');
-        const data = await response.json();
+                addDebugMessage("📨 Response status: " + response.status);
+                addDebugMessage("📨 Response headers: " + JSON.stringify(Object.fromEntries(response.headers.entries())));
 
-        // Hide upload section and show chat input
-        document.getElementById('uploadSection').style.display = 'none';
-        document.getElementById('chatInput').style.display = 'block';
+                hideTypingIndicator();
 
-        // Add first question
-        addMessage(data.question || "Let's begin! Tell me about yourself and your background.");
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addDebugMessage("❌ Response error: " + errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                let data;
+                try {
+                    const responseText = await response.text();
+                    addDebugMessage("📨 Raw response: " + responseText);
+                    data = JSON.parse(responseText);
+                    addDebugMessage("✅ Parsed response: " + JSON.stringify(data));
+                } catch (parseError) {
+                    addDebugMessage("❌ JSON parse error: " + parseError.message);
+                    throw new Error('Invalid JSON response from server');
+                }
 
-        // Start timer
-        startTimer();
-        interviewStarted = true;
-        document.getElementById('messageInput').focus();
+                // Hide upload section and show chat input
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('chatInput').style.display = 'block';
 
-    } catch (error) {
-        hideTypingIndicator();
-        console.error('Error starting interview:', error);
-        addMessage('❌ Sorry, there was an error starting the interview. Please try again.', false);
-        startBtn.disabled = false;
-        startBtn.textContent = 'Start Interview 🚀';
-    }
-}
+                // Add first question
+                const question = data.question || "Let's begin! Tell me about yourself and your background.";
+                addMessage(question);
+                addDebugMessage("✅ Interview started successfully");
 
+                // Start timer
+                startTimer();
+                interviewStarted = true;
+                document.getElementById('messageInput').focus();
+
+            } catch (error) {
+                hideTypingIndicator();
+                addDebugMessage("❌ Error in startInterview: " + error.message);
+                console.error('Error starting interview:', error);
+                
+                // Show detailed error to user
+                addMessage(`❌ <strong>Error starting interview:</strong><br>${error.message}<br><br>Please check the debug info below and try again.`, false);
+                
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Interview 🚀';
+            }
+        }
         
         async function sendMessage() {
             if (!interviewStarted || timeRemaining <= 0) return;
@@ -487,25 +571,39 @@
             sendBtn.disabled = true;
             
             showTypingIndicator();
+            addDebugMessage("💬 Sending message: " + message);
             
             try {
-                // Send message to AI
-                const formData = new FormData();
-                formData.append('message', message);
-                formData.append('sessionId', sessionId);
+                const payload = {
+                    message: message,
+                    sessionId: sessionId
+                };
+                addDebugMessage("📦 Chat payload: " + JSON.stringify(payload));
                 
                 const response = await fetch(CHAT_URL, {
                     method: 'POST',
-                    body: formData
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(payload)
                 });
+                
+                addDebugMessage("📨 Chat response status: " + response.status);
                 
                 hideTypingIndicator();
                 
                 if (!response.ok) {
-                    throw new Error('Failed to get response');
+                    const errorText = await response.text();
+                    addDebugMessage("❌ Chat response error: " + errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
                 
-                const data = await response.json();
+                const responseText = await response.text();
+                addDebugMessage("📨 Chat raw response: " + responseText);
+                
+                const data = JSON.parse(responseText);
+                addDebugMessage("✅ Chat parsed response: " + JSON.stringify(data));
                 
                 // Add AI response
                 if (data.response) {
@@ -516,6 +614,7 @@
                 
             } catch (error) {
                 hideTypingIndicator();
+                addDebugMessage("❌ Error in sendMessage: " + error.message);
                 console.error('Error sending message:', error);
                 addMessage('❌ Sorry, there was an error. Please try again.');
             } finally {
@@ -543,6 +642,7 @@
             if (file) {
                 if (file.type === 'application/pdf') {
                     showFileStatus('resumeStatus', `✅ ${file.name} selected`, 'success');
+                    addDebugMessage("📄 File selected: " + file.name + " (" + file.size + " bytes)");
                 } else {
                     showFileStatus('resumeStatus', 'Please select a PDF file', 'error');
                     e.target.value = '';
@@ -573,11 +673,16 @@
                 if (file.type === 'application/pdf') {
                     document.getElementById('resumeFile').files = files;
                     showFileStatus('resumeStatus', `✅ ${file.name} selected`, 'success');
+                    addDebugMessage("📄 File dropped: " + file.name);
                 } else {
                     showFileStatus('resumeStatus', 'Please drop a PDF file', 'error');
                 }
             }
         });
+        
+        // Add initial debug info
+        addDebugMessage("🔧 Debug mode enabled");
+        addDebugMessage("🌐 API Base: " + API_BASE);
     </script>
 </body>
 </html>
