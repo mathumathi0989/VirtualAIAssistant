@@ -1,0 +1,609 @@
+{
+  "name": "FinalWorkflow_AI",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User said: {{ $json.body.message }}\n\n\nPlease respond with a relevant interview question based on the conversation context {{ $json.body.sessionId }} and the candidate's resume. Use the resume_agent tool if you need specific information about their background.",
+        "options": {
+          "systemMessage": "=You are a senior technical interviewer with 10+ years of experience. You have thoroughly analyzed the candidate's resume using the resume_agent tool and understand their specific background, skills, and projects.\\n\\nBEHAVIOR:\\n- Act as an expert in the technologies and skills mentioned in their resume\\n- Start with a specific question about a particular project, technology, or experience from their resume\\n- Reference specific details you found in their resume (e.g., 'I see you worked with React and Node.js at [Company]...')\\n- Ask follow-up questions that drill deeper into their technical knowledge\\n- Challenge their understanding with scenario-based questions\\n- Mix technical depth with practical application questions\\n\\nQUESTION STRATEGY:\\n1. FIRST QUESTION: Always start by referencing a specific project or technology from their resume\\n2. TECHNICAL DEPTH: Ask about implementation details, challenges faced, and solutions\\n3. PROBLEM SOLVING: Present real-world scenarios related to their experience\\n4. BEHAVIORAL: Ask about teamwork, leadership, and decision-making in context of their projects\\n5. ARCHITECTURE: For senior roles, ask about system design and technical decisions\\n\\nEXAMPLE OPENING:\\n\\\"I noticed on your resume that you built a [specific project] using [technologies]. Can you walk me through the architecture decisions you made and why you chose [specific technology] over alternatives like [other options]?\\\"\\n\\nIMPORTANT:\\n- NEVER ask generic questions like 'tell me about yourself'\\n- ALWAYS reference specific details from their resume\\n- Demonstrate your expertise in their technology stack\\n- Ask ONE focused question at a time\\n- Use the resume_agent tool IMMEDIATELY to get specific details about their background before asking the first question\\n\\nAfter 5 minutes, provide detailed feedback with:\\n- Technical strengths demonstrated\\n- Areas needing improvement\\n- Specific recommendations\\n- Overall rating (1-10) with justification\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        560
+      ],
+      "id": "80cdbd7b-389b-41f9-ba20-a6a64ed273a0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        816
+      ],
+      "id": "771c4329-30ec-49b9-8543-bb78ca9a5b32",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qhe6wsVz21GFnRwG",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId || $('Extract Session Data').item.json.sessionId }}",
+        "tableName": "mathu_n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        864
+      ],
+      "id": "e15e8e4e-7429-4755-a450-9e880e745613",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "TKXt2HfOWGog3WTo",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this to retrieve information about the candidate's resume including their experience, skills, projects, education, and background. Call this tool when you need specific details about the candidate to ask relevant questions.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "topK": 10,
+        "options": {
+          "queryName": "match_documents_upo"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        800
+      ],
+      "id": "b7579559-839e-4a7e-92c4-3f2f3459e073",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tCENYgdiW4Oq3dfX",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        960
+      ],
+      "id": "dcff38ee-ed69-41f8-bc87-3e7e66ed0dfc",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qhe6wsVz21GFnRwG",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        32,
+        48
+      ],
+      "id": "db40304c-4c2c-4574-a60d-8e5f92529ed2",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tCENYgdiW4Oq3dfX",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        48,
+        368
+      ],
+      "id": "66e003ac-856a-4726-88f0-932e62788780",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qhe6wsVz21GFnRwG",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{$('Extract Session Data').item.json.sessionId}}_{{Date.now()}}"
+              },
+              {
+                "name": "version",
+                "value": "=1"
+              },
+              {
+                "name": "file_type",
+                "value": "={{$('Extract Session Data').item.json.resumeMimeType}}"
+              },
+              {
+                "name": "modified",
+                "value": "={{new Date().toISOString()}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        240
+      ],
+      "id": "0251a699-28bb-44fd-8b23-d1a5b0288dc6",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "4ac04e38-2f24-456a-a598-3f2796180e4b",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        288,
+        384
+      ],
+      "id": "3ff2fb21-fc8f-4d17-b03e-1044fbc21e9c",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/upload-resume",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "resume"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1120,
+        48
+      ],
+      "id": "8be4d9ba-ab77-44a4-870a-c9ecbe697372",
+      "name": "Upload Resume",
+      "webhookId": "5fbb3086-065d-41e9-ab5d-b5f339d352c0"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/interview-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -608,
+        624
+      ],
+      "id": "1a0b317a-5099-4649-be85-1f30d180a2b8",
+      "name": "Interview Chat",
+      "webhookId": "145d8cac-21cc-4221-bff8-995d8b806fdf"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"message\": \"Resume processed successfully! Let's start your interview.\",\n  \"question\": \"Hello! I've analyzed your resume. Let's begin with a simple question: Tell me about yourself and your background.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        496,
+        48
+      ],
+      "id": "11eb2b62-a2ac-434a-b785-8a819344bcc8",
+      "name": "Respond to Upload"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"response\": \"{{$json.response}}\",\n  \"status\": \"{{$json.status}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        624
+      ],
+      "id": "a11df24a-88fd-4850-b3d5-6c7eac6bc088",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b4a80045-ffb0-4b6c-ab37-92b61461ef3c",
+              "name": "sessionId",
+              "value": "={{$json.body.sessionId}}",
+              "type": "string"
+            },
+            {
+              "id": "a9431b2a-55e1-45f4-aebe-692899d44a57",
+              "name": "jobDescription",
+              "value": "={{$json.body.jobDescription}}",
+              "type": "string"
+            },
+            {
+              "id": "054236f1-2837-481b-b443-9cf5622f2d15",
+              "name": "resumeData",
+              "value": "={{$json.body.resumeData}}",
+              "type": "string"
+            },
+            {
+              "id": "245d4185-5dc2-4a1d-a869-a3462bd18f33",
+              "name": "resumeFileName",
+              "value": "={{$json.body.resumeFileName}}",
+              "type": "string"
+            },
+            {
+              "id": "36d281e1-39d8-40d1-bb80-56a76e804d72",
+              "name": "resumeMimeType",
+              "value": "={{$json.body.resumeMimeType}}",
+              "type": "string"
+            },
+            {
+              "id": "558f06ee-13e9-43f6-a864-da3e5a3ed963",
+              "name": "resumeFileSize",
+              "value": "={{$json.body.resumeFileSize}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        64
+      ],
+      "id": "d0fec9cf-4871-4fd0-ba24-b0c9ee598eef",
+      "name": "Extract Session Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if we have base64 resume data\nconst resumeData = $input.item.json.resumeData;\n\nconsole.log(\"Checking for resumeData:\", !!resumeData);\nconsole.log(\"ResumeData type:\", typeof resumeData);\n\nif (resumeData && resumeData.length > 0) {\n  console.log(\"Resume data length:\", resumeData.length);\n  \n  try {\n    // Convert base64 string to buffer\n    const buffer = Buffer.from(resumeData, 'base64');\n    console.log(\"Buffer created, size:\", buffer.length);\n    \n    // Return the item with binary data attached\n    return {\n      json: {\n        ...$input.item.json,\n        debug_buffer_size: buffer.length,\n        debug_has_binary: true\n      },\n      binary: {\n        resume: {\n          data: buffer,\n          mimeType: $input.item.json.resumeMimeType || 'application/pdf',\n          fileName: $input.item.json.resumeFileName || 'resume.pdf',\n          fileExtension: 'pdf'\n        }\n      }\n    };\n  } catch (error) {\n    console.log(\"Buffer creation error:\", error.message);\n    return {\n      json: {\n        ...$input.item.json,\n        debug_error: error.message,\n        debug_failed_conversion: true\n      }\n    };\n  }\n} else {\n  console.log(\"No resume data found or empty\");\n  console.log(\"Available keys:\", Object.keys($input.item.json));\n  return {\n    json: {\n      ...$input.item.json,\n      debug_no_resume_data: true,\n      debug_available_keys: Object.keys($input.item.json)\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        48
+      ],
+      "id": "e003960a-c381-4b78-a924-341569a2d661",
+      "name": "Convert Base64 to Binary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get first input safely\nconst firstInput = $input.first() || { json: {} };\nlet aiOutput = firstInput.json.output \n            || firstInput.json.response \n            || firstInput.json.text \n            || \"I'm sorry, I couldn't generate a response.\";\n\n// Only sanitize if aiOutput is a string\nif (typeof aiOutput === \"string\") {\n  aiOutput = aiOutput.replace(/\\r?\\n/g, \"\\\\n\");\n}\n\n// Return formatted JSON\nreturn [{\n  json: {\n    response: aiOutput,\n    status: \"success\",\n    timestamp: new Date().toISOString()\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        608
+      ],
+      "id": "85447e71-0b0d-46fa-bff9-fdd9a62386e6",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sessionId = $('Extract Session Data').item.json.sessionId;\nconsole.log('Processing resume for session:', sessionId);\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        64
+      ],
+      "id": "645a7ad4-a533-439e-80c1-7d5b4b9f74df",
+      "name": "Code"
+    }
+  ],
+  "pinData": {
+    "Interview Chat": [
+      {
+        "json": {
+          "headers": {
+            "host": "mathumqa.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+            "content-length": "78",
+            "accept": "application/json",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "96.242.29.142",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9765849970ccef45-LHR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://mathumathi0989.github.io",
+            "priority": "u=1, i",
+            "referer": "https://mathumathi0989.github.io/",
+            "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Google Chrome\";v=\"139\", \"Chromium\";v=\"139\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "96.242.29.142, 141.101.99.213",
+            "x-forwarded-host": "mathumqa.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-87-bcb9f59f7-6frbl",
+            "x-is-trusted": "yes",
+            "x-real-ip": "96.242.29.142"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "i dont have",
+            "sessionId": "tech_interview_1756401948675_dpqb18vv1"
+          },
+          "webhookUrl": "https://mathumqa.app.n8n.cloud/webhook/interview-chat",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Resume": {
+      "main": [
+        [
+          {
+            "node": "Extract Session Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Respond to Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interview Chat": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Session Data": {
+      "main": [
+        [
+          {
+            "node": "Convert Base64 to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Base64 to Binary": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f5ca116c-9fb8-46ce-91a1-7429e64338ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "30352fb979112b921307b0b8316e975e7051c8ec407ce7f137a1cc50c0fc0e9c"
+  },
+  "id": "NxbbPTVqrFuqghJq",
+  "tags": []
+}
