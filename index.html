@@ -445,12 +445,12 @@
     document.getElementById('timer').textContent = 
         `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
-  if (timeRemaining <= 0) {
+ if (timeRemaining <= 0) {
     clearInterval(timerInterval);
 
     addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
 
-    // Optional: signal backend explicitly
+    // Tell backend that time expired
     fetch(CHAT_URL, {
         method: 'POST',
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
@@ -459,7 +459,7 @@
             sessionId: sessionId,
             candidateEmail: candidateEmail
         })
-    });
+    }).catch(err => addDebugMessage("❌ AUTO_END send error: " + err));
 
     document.getElementById('chatInput').style.display = 'none';
     return;
