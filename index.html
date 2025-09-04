@@ -485,14 +485,13 @@
             });
         }
         
-       
+          let candidateEmail = "";
         async function startInterview() {
-             let candidateEmail = "";
+           candidateEmail = document.getElementById('candidateEmail').value.trim();
             const resumeFile = document.getElementById('resumeFile').files[0];
             const jobDescription = document.getElementById('jobDescription').value.trim();
             const startBtn = document.getElementById('startBtn');
-          candidateEmail = document.getElementById('candidateEmail').value.trim();
-
+         
             if (!candidateEmail) {
     showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
     return;
