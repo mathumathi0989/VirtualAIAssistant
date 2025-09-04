@@ -604,28 +604,30 @@
         }
         
         async function sendMessage() {
-            if (!interviewStarted || timeRemaining <= 0) return;
-            
-            const messageInput = document.getElementById('messageInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const message = messageInput.value.trim();
-            
-            if (!message) return;
-            
-            // Add user message
-            addMessage(message, true);
-            messageInput.value = '';
-            sendBtn.disabled = true;
-            
-            showTypingIndicator();
-            addDebugMessage("📤 Sending message: " + message.substring(0, 50) + "...");
-            
+        if (!interviewStarted || timeRemaining <= 0) return;
+    
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message
+    addMessage(message, true);
+    messageInput.value = '';
+    sendBtn.disabled = true;
+    
+    showTypingIndicator();
+    addDebugMessage("📤 Sending message: " + message.substring(0, 50) + "...");
+    
             try {
                 const payload = {
                     message: message,
-                    sessionId: sessionId
+                    sessionId: sessionId,
+                    candidateEmail: candidateEmail
                 };
-                
+                addDebugMessage("📧 Including email in request: " + candidateEmail);
+       
                 const response = await fetch(CHAT_URL, {
                     method: 'POST',
                     headers: { 
