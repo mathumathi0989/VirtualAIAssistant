@@ -445,19 +445,25 @@
     document.getElementById('timer').textContent = 
         `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
-    if (timeRemaining <= 0) {
-        clearInterval(timerInterval);
-        
-        // Auto-trigger feedback
-        document.getElementById('messageInput').value = 'END_INTERVIEW';
-        sendMessage();
-        
-        addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
-        document.getElementById('chatInput').style.display = 'none';
-        return;
-    }
-    
-    timeRemaining--;
+  if (timeRemaining <= 0) {
+    clearInterval(timerInterval);
+
+    addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
+
+    // Optional: signal backend explicitly
+    fetch(CHAT_URL, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+            message: "AUTO_END",
+            sessionId: sessionId,
+            candidateEmail: candidateEmail
+        })
+    });
+
+    document.getElementById('chatInput').style.display = 'none';
+    return;
+}
         }
         
         function startTimer() {
@@ -479,11 +485,13 @@
             });
         }
         
+       
         async function startInterview() {
+             let candidateEmail = "";
             const resumeFile = document.getElementById('resumeFile').files[0];
             const jobDescription = document.getElementById('jobDescription').value.trim();
             const startBtn = document.getElementById('startBtn');
-            const candidateEmail = document.getElementById('candidateEmail').value.trim();
+          candidateEmail = document.getElementById('candidateEmail').value.trim();
 
             if (!candidateEmail) {
     showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
