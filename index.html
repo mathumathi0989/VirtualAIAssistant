@@ -365,6 +365,12 @@
                     <h2>Get Started</h2>
                     <p>Upload your resume to begin a personalized technical interview</p>
                 </div>
+
+                <div class="file-input-group">
+    <label for="candidateEmail">📧 Your Email Address*</label>
+    <input type="email" id="candidateEmail" class="file-input" placeholder="your.email@example.com" required>
+    <div class="file-status" id="emailStatus"></div>
+</div>
                 
                 <div class="file-input-group">
                     <label for="resumeFile">📄 Resume (PDF Required)*</label>
@@ -472,7 +478,13 @@
             const resumeFile = document.getElementById('resumeFile').files[0];
             const jobDescription = document.getElementById('jobDescription').value.trim();
             const startBtn = document.getElementById('startBtn');
+            const candidateEmail = document.getElementById('candidateEmail').value.trim();
 
+            if (!candidateEmail) {
+    showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
+    return;
+}
+            
             if (!resumeFile) {
                 showFileStatus('resumeStatus', '❌ Please select a PDF resume file', 'error');
                 return;
@@ -502,7 +514,8 @@
                     resumeFileName: resumeFile.name,
                     resumeMimeType: resumeFile.type,
                     resumeFileSize: resumeFile.size,
-                    jobDescription: jobDescription || ""
+                    jobDescription: jobDescription || "",
+                    candidateEmail: candidateEmail
                 };
                 
                 addDebugMessage("📤 Sending payload to AI interviewer...");
