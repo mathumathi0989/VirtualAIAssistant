@@ -440,19 +440,24 @@
         }
         
         function updateTimer() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            document.getElementById('timer').textContent = 
-                `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                addMessage('<strong>⏰ Time is up!</strong><br>Thank you for participating in this technical interview. You should receive feedback shortly.');
-                document.getElementById('chatInput').style.display = 'none';
-                return;
-            }
-            
-            timeRemaining--;
+             const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    document.getElementById('timer').textContent = 
+        `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        
+        // Auto-trigger feedback
+        document.getElementById('messageInput').value = 'END_INTERVIEW';
+        sendMessage();
+        
+        addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
+        document.getElementById('chatInput').style.display = 'none';
+        return;
+    }
+    
+    timeRemaining--;
         }
         
         function startTimer() {
