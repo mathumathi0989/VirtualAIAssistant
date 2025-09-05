@@ -442,12 +442,18 @@
             
             timeRemaining--;
             
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
-                document.getElementById('chatInput').style.display = 'none';
-                return;
-            }
+         if (timeRemaining <= 0) {
+    clearInterval(timerInterval);
+    
+    // Show time up message
+    addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
+    document.getElementById('chatInput').style.display = 'none';
+
+    // ⬇️ Trigger END so backend sends email
+    sendMessage("END", true);  // pass "END" as if user typed it
+
+    return;
+}
         }
         
         function startTimer() {
@@ -600,23 +606,28 @@
             }, 2000);
         }
         
-        async function sendMessage() {
-            if (!interviewStarted) return;
-        
-            const messageInput = document.getElementById('messageInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const message = messageInput.value.trim();
-            
-            if (!message) return;
-            
-            // Add user message
-            addMessage(message, true);
-            messageInput.value = '';
-            sendBtn.disabled = true;
-            
-            showTypingIndicator();
-            console.log("📤 Sending message:", message.substring(0, 50) + "...");
-            
+       async function sendMessage(forcedMessage = null, systemTriggered = false) {
+    if (!interviewStarted) return;
+
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const message = forcedMessage !== null ? forcedMessage : messageInput.value.trim();
+    
+    if (!message) return;
+
+    // Only add user message bubble if it's not system-triggered
+    if (!systemTriggered) {
+        addMessage(message, true);
+    }
+
+    if (!systemTriggered) {
+        messageInput.value = '';
+        sendBtn.disabled = true;
+    }
+
+    showTypingIndicator();
+    console.log("📤 Sending message:", message.substring(0, 50) + "...");
+    
             try {
                 const payload = {
                     message: message,
