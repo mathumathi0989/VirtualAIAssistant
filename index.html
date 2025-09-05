@@ -677,6 +677,17 @@
                     addMessage("I need a moment to process your response. Could you please elaborate on that?");
                     console.log("⚠️ No response field found in:", JSON.stringify(data).substring(0, 100));
                 }
+
+                // After displaying AI response, check if it's the final message
+if (data.response && data.response.includes("✅ Thanks for completing")) {
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    if (messageInput) messageInput.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+    document.querySelector(".end-instruction").textContent =
+        "Interview has ended. Check your email for feedback ✅";
+}
+                
         
             } catch (error) {
                 hideTypingIndicator();
