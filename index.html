@@ -601,7 +601,7 @@
         }
         
         async function sendMessage() {
-            if (!interviewStarted || timeRemaining <= 0) return;
+            if (!interviewStarted) return;
         
             const messageInput = document.getElementById('messageInput');
             const sendBtn = document.getElementById('sendBtn');
