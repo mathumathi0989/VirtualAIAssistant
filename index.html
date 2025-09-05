@@ -304,20 +304,6 @@
             border: 1px solid #fca5a5;
         }
         
-        .debug-info {
-            background: #f0f9ff;
-            border: 1px solid #0ea5e9;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 16px 0;
-            font-family: 'SF Mono', monospace;
-            font-size: 11px;
-            white-space: pre-wrap;
-            max-height: 200px;
-            overflow-y: auto;
-            text-align: left;
-        }
-        
         .interview-intro {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             border: 1px solid #0ea5e9;
@@ -371,12 +357,11 @@
             </div>
             
             <div class="upload-section" id="uploadSection">
-
                 <div class="file-input-group">
-    <label for="candidateEmail">📧 Your Email Address*</label>
-    <input type="email" id="candidateEmail" class="file-input" placeholder="your.email@example.com" required>
-    <div class="file-status" id="emailStatus"></div>
-</div>
+                    <label for="candidateEmail">📧 Your Email Address*</label>
+                    <input type="email" id="candidateEmail" class="file-input" placeholder="your.email@example.com" required>
+                    <div class="file-status" id="emailStatus"></div>
+                </div>
                 
                 <div class="file-input-group">
                     <label for="resumeFile">📄 Resume (PDF Required)*</label>
@@ -392,8 +377,6 @@
                 <button class="start-btn" id="startBtn" onclick="startInterview()">
                     🚀 Begin Interview
                 </button>
-                
-                <div class="debug-info" id="debugInfo"></div>
             </div>
         </div>
         
@@ -402,11 +385,10 @@
                 <input type="text" id="messageInput" placeholder="Type your answer here..." maxlength="800">
                 <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
             </div>
+            <p class="end-instruction">
+                <strong>If you want to end the interview, just type "END".</strong>
+            </p>
         </div>
-     
-<p style="font-size: 14px; color: gray; margin-top: 4px; font-weight: bold; text-align: center;">
-  If you want to end the interview, just type "END".
-</p>
     </div>
 
     <script>
@@ -421,7 +403,7 @@
         
         // Initialize session ID
         sessionId = 'tech_interview_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        addDebugMessage("🔧 Session ID: " + sessionId);
+        console.log("🔧 Session ID:", sessionId);
         
         function addMessage(content, isUser = false) {
             const messagesDiv = document.getElementById('chatMessages');
@@ -492,7 +474,7 @@
         
         let candidateEmail = "";
         async function startInterview() {
-           candidateEmail = document.getElementById('candidateEmail').value.trim();
+            candidateEmail = document.getElementById('candidateEmail').value.trim();
             const resumeFile = document.getElementById('resumeFile').files[0];
             const jobDescription = document.getElementById('jobDescription').value.trim();
             const startBtn = document.getElementById('startBtn');
@@ -514,13 +496,13 @@
 
             startBtn.disabled = true;
             startBtn.textContent = '📄 Processing Resume...';
-            addDebugMessage("🚀 Starting technical interview process...");
+            console.log("🚀 Starting technical interview process...");
 
             try {
                 // Convert PDF to base64
-                addDebugMessage("📄 Converting PDF to base64...");
+                console.log("📄 Converting PDF to base64...");
                 const base64Data = await fileToBase64(resumeFile);
-                addDebugMessage("✅ PDF converted successfully. Size: " + Math.round(base64Data.length / 1024) + " KB");
+                console.log("✅ PDF converted successfully. Size:", Math.round(base64Data.length / 1024), "KB");
                 
                 startBtn.textContent = '🤖 Analyzing with AI...';
                 
@@ -535,7 +517,7 @@
                     candidateEmail: candidateEmail
                 };
                 
-                addDebugMessage("📤 Sending payload to AI interviewer...");
+                console.log("📤 Sending payload to AI interviewer...");
                 showTypingIndicator();
                 
                 const response = await fetch(UPLOAD_URL, {
@@ -547,17 +529,17 @@
                     body: JSON.stringify(payload)
                 });
 
-                addDebugMessage("📥 Response status: " + response.status);
+                console.log("📥 Response status:", response.status);
                 hideTypingIndicator();
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    addDebugMessage("❌ Upload failed: " + errorText);
+                    console.log("❌ Upload failed:", errorText);
                     throw new Error(`Upload failed: ${response.status} - ${errorText}`);
                 }
                 
                 const responseText = await response.text();
-                addDebugMessage("📋 Raw response: " + responseText.substring(0, 200) + "...");
+                console.log("📋 Raw response:", responseText.substring(0, 200) + "...");
                 
                 if (!responseText || responseText.trim() === '') {
                     throw new Error('Empty response from AI interviewer');
@@ -567,21 +549,21 @@
                 try {
                     data = JSON.parse(responseText);
                 } catch (parseError) {
-                    addDebugMessage("❌ JSON parse error: " + parseError.message);
+                    console.log("❌ JSON parse error:", parseError.message);
                     throw new Error('Invalid JSON response from AI interviewer');
                 }
 
-                addDebugMessage("✅ Interview setup successful");
+                console.log("✅ Interview setup successful");
 
                 // Success! Start the interview
                 setupInterviewUI(data);
 
             } catch (error) {
                 hideTypingIndicator();
-                addDebugMessage("❌ Error: " + error.message);
+                console.log("❌ Error:", error.message);
                 console.error('Error starting interview:', error);
                 
-                addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please check the debug info and try again.`, false);
+                addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please try again.`, false);
                 
                 startBtn.disabled = false;
                 startBtn.textContent = '🚀 Begin Interview';
@@ -603,7 +585,7 @@
                 }, 1500);
             }
             
-            addDebugMessage("✅ Interview started successfully");
+            console.log("✅ Interview started successfully");
 
             // Start timer
             startTimer();
@@ -633,81 +615,81 @@
             sendBtn.disabled = true;
             
             showTypingIndicator();
-            addDebugMessage("📤 Sending message: " + message.substring(0, 50) + "...");
+            console.log("📤 Sending message:", message.substring(0, 50) + "...");
             
-                    try {
-                        const payload = {
-                            message: message,
-                            sessionId: sessionId,
-                            candidateEmail: candidateEmail
-                        };
-                        addDebugMessage("📧 Including email in request: " + candidateEmail);
-               
-                        const response = await fetch(CHAT_URL, {
-                            method: 'POST',
-                            headers: { 
-                                "Content-Type": "application/json",
-                                "Accept": "application/json"
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        
-                        addDebugMessage("📥 Chat response status: " + response.status);
-                        hideTypingIndicator();
-                        
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            addDebugMessage("❌ Chat error: " + errorText);
-                            throw new Error(`Chat failed: ${response.status}`);
-                        }
-                        
-                        const responseText = await response.text();
-                        addDebugMessage("📋 Raw chat response length: " + responseText.length);
-
-                        let data;
-                        try {
-                            data = JSON.parse(responseText);
-                        } catch (parseError) {
-                            addDebugMessage("❌ JSON parse error: " + parseError.message);
-                            throw new Error('Invalid JSON response from AI interviewer');
-                        }
-
-                        // Handle array response from n8n
-                        if (Array.isArray(data) && data.length > 0) {
-                            data = data[0];
-                            addDebugMessage("📋 Using first array item");
-                        }
-
-                        // Add AI response - check multiple possible response fields
-                        if (data.response) {
-                            addMessage(data.response);
-                            addDebugMessage("✅ Added AI response");
-                        } else if (data.output) {
-                            addMessage(data.output);
-                            addDebugMessage("✅ Added AI output");
-                        } else if (data.text) {
-                            addMessage(data.text);
-                            addDebugMessage("✅ Added AI text");
-                        } else if (typeof data === 'string') {
-                            addMessage(data);
-                            addDebugMessage("✅ Added string response");
-                        } else {
-                            addMessage("I need a moment to process your response. Could you please elaborate on that?");
-                            addDebugMessage("⚠️ No response field found in: " + JSON.stringify(data).substring(0, 100));
-                        }
+            try {
+                const payload = {
+                    message: message,
+                    sessionId: sessionId,
+                    candidateEmail: candidateEmail
+                };
+                console.log("📧 Including email in request:", candidateEmail);
+       
+                const response = await fetch(CHAT_URL, {
+                    method: 'POST',
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
                 
-                    } catch (error) {
-                        hideTypingIndicator();
-                        addDebugMessage("❌ Chat error: " + error.message);
-                        addMessage('Sorry, there was a technical issue. Please try again.');
-                    } finally {
-                        sendBtn.disabled = false;
-                        const messageInput = document.getElementById('messageInput');
-                        if (messageInput) {
-                            messageInput.focus();
-                        }
-                    }
+                console.log("📥 Chat response status:", response.status);
+                hideTypingIndicator();
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log("❌ Chat error:", errorText);
+                    throw new Error(`Chat failed: ${response.status}`);
                 }
+                
+                const responseText = await response.text();
+                console.log("📋 Raw chat response length:", responseText.length);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.log("❌ JSON parse error:", parseError.message);
+                    throw new Error('Invalid JSON response from AI interviewer');
+                }
+
+                // Handle array response from n8n
+                if (Array.isArray(data) && data.length > 0) {
+                    data = data[0];
+                    console.log("📋 Using first array item");
+                }
+
+                // Add AI response - check multiple possible response fields
+                if (data.response) {
+                    addMessage(data.response);
+                    console.log("✅ Added AI response");
+                } else if (data.output) {
+                    addMessage(data.output);
+                    console.log("✅ Added AI output");
+                } else if (data.text) {
+                    addMessage(data.text);
+                    console.log("✅ Added AI text");
+                } else if (typeof data === 'string') {
+                    addMessage(data);
+                    console.log("✅ Added string response");
+                } else {
+                    addMessage("I need a moment to process your response. Could you please elaborate on that?");
+                    console.log("⚠️ No response field found in:", JSON.stringify(data).substring(0, 100));
+                }
+        
+            } catch (error) {
+                hideTypingIndicator();
+                console.log("❌ Chat error:", error.message);
+                addMessage('Sorry, there was a technical issue. Please try again.');
+            } finally {
+                sendBtn.disabled = false;
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) {
+                    messageInput.focus();
+                }
+            }
+        }
         
         function showFileStatus(elementId, message, type) {
             const statusEl = document.getElementById(elementId);
@@ -716,16 +698,6 @@
                 statusEl.className = `file-status ${type}`;
                 statusEl.style.display = 'block';
             }
-        }
-        
-        function addDebugMessage(message) {
-            const debugDiv = document.getElementById('debugInfo');
-            if (debugDiv) {
-                const timestamp = new Date().toLocaleTimeString();
-                debugDiv.textContent += `[${timestamp}] ${message}\n`;
-                debugDiv.scrollTop = debugDiv.scrollHeight;
-            }
-            console.log(message);
         }
         
         // Event listeners
@@ -745,7 +717,7 @@
                 if (file) {
                     if (file.type === 'application/pdf') {
                         showFileStatus('resumeStatus', `✅ ${file.name} selected (${Math.round(file.size/1024)} KB)`, 'success');
-                        addDebugMessage("📄 File selected: " + file.name + " (" + file.size + " bytes)");
+                        console.log("📄 File selected:", file.name, "(", file.size, "bytes)");
                     } else {
                         showFileStatus('resumeStatus', '❌ Please select a PDF file', 'error');
                         e.target.value = '';
@@ -780,15 +752,16 @@
                         if (resumeFileInput) {
                             resumeFileInput.files = files;
                             showFileStatus('resumeStatus', `✅ ${file.name} selected`, 'success');
-                            addDebugMessage("📄 File dropped: " + file.name);
+                            console.log("📄 File dropped:", file.name);
                         }
                     } else {
                         showFileStatus('resumeStatus', '❌ Please drop a PDF file', 'error');
                     }
                 }
             });
+        }
         
-        addDebugMessage("🔧 Frontend initialized. API Base: " + API_BASE);
+        console.log("🔧 Frontend initialized. API Base:", API_BASE);
     </script>
 </body>
 </html>
