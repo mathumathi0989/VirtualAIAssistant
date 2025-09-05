@@ -351,7 +351,7 @@
         <div class="chat-header">
             <h1>AI Technical Interview</h1>
             <p>Professional mock interview with expert-level technical questions</p>
-
+            <div class="timer" id="timer"></div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
@@ -405,7 +405,7 @@
         const CHAT_URL = `${API_BASE}/interview-chat`;
         
         let interviewStarted = false;
-        let timeRemaining = 300; // 15 minutes for technical interview
+        let timeRemaining = 900; // 15 minutes for technical interview
         let timerInterval = null;
         let sessionId = null;
         
@@ -440,36 +440,31 @@
         }
         
         function updateTimer() {
-             const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
-    document.getElementById('timer').textContent = 
-        `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
-//  if (timeRemaining <= 0) {
-//     clearInterval(timerInterval);
-
-//     addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
-
-//     // // Tell backend that time expired
-//     // fetch(CHAT_URL, {
-//     //     method: 'POST',
-//     //     headers: { "Content-Type": "application/json", "Accept": "application/json" },
-//     //     body: JSON.stringify({
-//     //         message: "AUTO_END",
-//     //         sessionId: sessionId,
-//     //         candidateEmail: candidateEmail
-//     //     })
-//     // }).catch(err => addDebugMessage("❌ AUTO_END send error: " + err));
-
-//     document.getElementById('chatInput').style.display = 'none';
-//     return;
-// }
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timerElement = document.getElementById('timer');
+            if (timerElement) {
+                timerElement.textContent = 
+                    `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            timeRemaining--;
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
+                document.getElementById('chatInput').style.display = 'none';
+                return;
+            }
         }
         
         function startTimer() {
-            document.getElementById('timer').style.display = 'block';
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 1000);
+            const timerElement = document.getElementById('timer');
+            if (timerElement) {
+                timerElement.style.display = 'block';
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
         }
         
         // Convert file to base64
@@ -485,7 +480,7 @@
             });
         }
         
-          let candidateEmail = "";
+        let candidateEmail = "";
         async function startInterview() {
            candidateEmail = document.getElementById('candidateEmail').value.trim();
             const resumeFile = document.getElementById('resumeFile').files[0];
@@ -493,9 +488,9 @@
             const startBtn = document.getElementById('startBtn');
          
             if (!candidateEmail) {
-    showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
-    return;
-}
+                showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
+                return;
+            }
             
             if (!resumeFile) {
                 showFileStatus('resumeStatus', '❌ Please select a PDF resume file', 'error');
@@ -606,103 +601,111 @@
             
             // Focus on input after a brief delay
             setTimeout(() => {
-                document.getElementById('messageInput').focus();
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) {
+                    messageInput.focus();
+                }
             }, 2000);
         }
         
         async function sendMessage() {
-        if (!interviewStarted || timeRemaining <= 0) return;
-    
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const message = messageInput.value.trim();
-    
-    if (!message) return;
-    
-    // Add user message
-    addMessage(message, true);
-    messageInput.value = '';
-    sendBtn.disabled = true;
-    
-    showTypingIndicator();
-    addDebugMessage("📤 Sending message: " + message.substring(0, 50) + "...");
-    
-            try {
-                const payload = {
-                    message: message,
-                    sessionId: sessionId,
-                    candidateEmail: candidateEmail
-                };
-                addDebugMessage("📧 Including email in request: " + candidateEmail);
-       
-                const response = await fetch(CHAT_URL, {
-                    method: 'POST',
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                addDebugMessage("📥 Chat response status: " + response.status);
-                hideTypingIndicator();
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    addDebugMessage("❌ Chat error: " + errorText);
-                    throw new Error(`Chat failed: ${response.status}`);
-                }
-                
-                const responseText = await response.text();
-                addDebugMessage("📋 Raw chat response length: " + responseText.length);
-
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                } catch (parseError) {
-                    addDebugMessage("❌ JSON parse error: " + parseError.message);
-                    throw new Error('Invalid JSON response from AI interviewer');
-                }
-
-                // Handle array response from n8n
-                if (Array.isArray(data) && data.length > 0) {
-                    data = data[0];
-                    addDebugMessage("📋 Using first array item");
-                }
-
-                // Add AI response - check multiple possible response fields
-                if (data.response) {
-                    addMessage(data.response);
-                    addDebugMessage("✅ Added AI response");
-                } else if (data.output) {
-                    addMessage(data.output);
-                    addDebugMessage("✅ Added AI output");
-                } else if (data.text) {
-                    addMessage(data.text);
-                    addDebugMessage("✅ Added AI text");
-                } else if (typeof data === 'string') {
-                    addMessage(data);
-                    addDebugMessage("✅ Added string response");
-                } else {
-                    addMessage("I need a moment to process your response. Could you please elaborate on that?");
-                    addDebugMessage("⚠️ No response field found in: " + JSON.stringify(data).substring(0, 100));
-                }
+            if (!interviewStarted || timeRemaining <= 0) return;
         
-            } catch (error) {
-                hideTypingIndicator();
-                addDebugMessage("❌ Chat error: " + error.message);
-                addMessage('Sorry, there was a technical issue. Please try again.');
-            } finally {
-                sendBtn.disabled = false;
-                messageInput.focus();
-            }
-        }
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
+            sendBtn.disabled = true;
+            
+            showTypingIndicator();
+            addDebugMessage("📤 Sending message: " + message.substring(0, 50) + "...");
+            
+                    try {
+                        const payload = {
+                            message: message,
+                            sessionId: sessionId,
+                            candidateEmail: candidateEmail
+                        };
+                        addDebugMessage("📧 Including email in request: " + candidateEmail);
+               
+                        const response = await fetch(CHAT_URL, {
+                            method: 'POST',
+                            headers: { 
+                                "Content-Type": "application/json",
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        addDebugMessage("📥 Chat response status: " + response.status);
+                        hideTypingIndicator();
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            addDebugMessage("❌ Chat error: " + errorText);
+                            throw new Error(`Chat failed: ${response.status}`);
+                        }
+                        
+                        const responseText = await response.text();
+                        addDebugMessage("📋 Raw chat response length: " + responseText.length);
+
+                        let data;
+                        try {
+                            data = JSON.parse(responseText);
+                        } catch (parseError) {
+                            addDebugMessage("❌ JSON parse error: " + parseError.message);
+                            throw new Error('Invalid JSON response from AI interviewer');
+                        }
+
+                        // Handle array response from n8n
+                        if (Array.isArray(data) && data.length > 0) {
+                            data = data[0];
+                            addDebugMessage("📋 Using first array item");
+                        }
+
+                        // Add AI response - check multiple possible response fields
+                        if (data.response) {
+                            addMessage(data.response);
+                            addDebugMessage("✅ Added AI response");
+                        } else if (data.output) {
+                            addMessage(data.output);
+                            addDebugMessage("✅ Added AI output");
+                        } else if (data.text) {
+                            addMessage(data.text);
+                            addDebugMessage("✅ Added AI text");
+                        } else if (typeof data === 'string') {
+                            addMessage(data);
+                            addDebugMessage("✅ Added string response");
+                        } else {
+                            addMessage("I need a moment to process your response. Could you please elaborate on that?");
+                            addDebugMessage("⚠️ No response field found in: " + JSON.stringify(data).substring(0, 100));
+                        }
+                
+                    } catch (error) {
+                        hideTypingIndicator();
+                        addDebugMessage("❌ Chat error: " + error.message);
+                        addMessage('Sorry, there was a technical issue. Please try again.');
+                    } finally {
+                        sendBtn.disabled = false;
+                        const messageInput = document.getElementById('messageInput');
+                        if (messageInput) {
+                            messageInput.focus();
+                        }
+                    }
+                }
         
         function showFileStatus(elementId, message, type) {
             const statusEl = document.getElementById(elementId);
-            statusEl.textContent = message;
-            statusEl.className = `file-status ${type}`;
-            statusEl.style.display = 'block';
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = `file-status ${type}`;
+                statusEl.style.display = 'block';
+            }
         }
         
         function addDebugMessage(message) {
@@ -716,54 +719,65 @@
         }
         
         // Event listeners
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-        
-        document.getElementById('resumeFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                if (file.type === 'application/pdf') {
-                    showFileStatus('resumeStatus', `✅ ${file.name} selected (${Math.round(file.size/1024)} KB)`, 'success');
-                    addDebugMessage("📄 File selected: " + file.name + " (" + file.size + " bytes)");
-                } else {
-                    showFileStatus('resumeStatus', '❌ Please select a PDF file', 'error');
-                    e.target.value = '';
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) {
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
                 }
-            }
-        });
+            });
+        }
+        
+        const resumeFileInput = document.getElementById('resumeFile');
+        if (resumeFileInput) {
+            resumeFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.type === 'application/pdf') {
+                        showFileStatus('resumeStatus', `✅ ${file.name} selected (${Math.round(file.size/1024)} KB)`, 'success');
+                        addDebugMessage("📄 File selected: " + file.name + " (" + file.size + " bytes)");
+                    } else {
+                        showFileStatus('resumeStatus', '❌ Please select a PDF file', 'error');
+                        e.target.value = '';
+                    }
+                }
+            });
+        }
         
         // Drag and drop functionality
         const uploadSection = document.getElementById('uploadSection');
         
-        uploadSection.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadSection.classList.add('dragover');
-        });
-        
-        uploadSection.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            uploadSection.classList.remove('dragover');
-        });
-        
-        uploadSection.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadSection.classList.remove('dragover');
+        if (uploadSection) {
+            uploadSection.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadSection.classList.add('dragover');
+            });
             
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type === 'application/pdf') {
-                    document.getElementById('resumeFile').files = files;
-                    showFileStatus('resumeStatus', `✅ ${file.name} selected`, 'success');
-                    addDebugMessage("📄 File dropped: " + file.name);
-                } else {
-                    showFileStatus('resumeStatus', '❌ Please drop a PDF file', 'error');
+            uploadSection.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadSection.classList.remove('dragover');
+            });
+            
+            uploadSection.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadSection.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'application/pdf') {
+                        const resumeFileInput = document.getElementById('resumeFile');
+                        if (resumeFileInput) {
+                            resumeFileInput.files = files;
+                            showFileStatus('resumeStatus', `✅ ${file.name} selected`, 'success');
+                            addDebugMessage("📄 File dropped: " + file.name);
+                        }
+                    } else {
+                        showFileStatus('resumeStatus', '❌ Please drop a PDF file', 'error');
+                    }
                 }
-            }
-        });
+            });
+        }
         
         addDebugMessage("🔧 Frontend initialized. API Base: " + API_BASE);
     </script>
