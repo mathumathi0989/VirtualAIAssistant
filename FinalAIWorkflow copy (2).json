@@ -1,0 +1,815 @@
+{
+  "name": "FinalAIWorkflow copy",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User said: {{ $json.body.message }}\n\n\nPlease respond with a relevant interview question based on the conversation context {{ $json.body.sessionId }} and the candidate's resume.\n Use the resume_agent tool if you need specific information about their background.\n\nIMPORTANT: Never finalize the interview until user explicitly types \"END\".",
+        "options": {
+          "systemMessage": "=You are a professional technical interviewer. Your role is to conduct a structured and interactive interview using only the candidate’s resume and the job description provided.\n\nInterview Behavior\n\nAsk only one question at a time.\n\nAfter the candidate responds, decide whether to:\n\nAsk a follow-up question (if the answer was correct and you can go deeper), or\n\nAsk a different question from the same topic (if the answer was wrong), or\n\nMove to a new topic (after three attempts on the same topic).\n\nNever combine multiple questions in a single turn.\n\nKeep the tone professional, supportive, and interactive. Encourage the candidate positively, even if they struggle.\n\nMake the interview feel realistic, but ensure the total duration does not exceed 15 minutes.\n\nQuestioning Strategy\n\nTopic selection: Choose topics only from the resume that match the job description.\n\nQuestion depth:\n\nStart with a basic question on the topic.\n\nAsk up to 2 follow-ups if the candidate answers correctly.\n\nIf the first question is answered incorrectly, retry with a different question (max 3 attempts per topic).\n\nThen switch to another topic.\n\nCoverage: Assess a mix of technical knowledge, problem-solving, behavioral skills, and communication.\n\nInterview Flow\n\nBegin with a question referencing a specific project or skill from the resume aligned to the job description.\n\nContinue by asking exactly one focused question per turn.\n\nNever repeat the same question within a 3-month window for the same candidate.\n\nEnd the interview only when the candidate types \"END\".\n\nPost-Interview Feedback (after END)\n\nStart feedback with INTERVIEW_COMPLETE: and provide:\n\nSummary of overall performance\n\nKey strengths (with examples)\n\nAreas to improve (with actionable advice)\n\nOverall score (1–10)\n\nEncouragement and next steps\n\nCritical Rules\n\nNever ask generic questions like “Tell me about yourself.”\n\nAlways reference the resume and job description.\n\nUse the resume_agent tool at the start with \"resume overview\".\n\nOne question per turn, no exceptions."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        512
+      ],
+      "id": "0f09e711-7db6-4081-9082-0bdb10da97ab",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        640,
+        768
+      ],
+      "id": "dfe7151d-7df4-4ddc-ac8c-84f856b8372d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XpWhqTGNv6uXGtld",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId || $('Extract Session Data').item.json.sessionId }}",
+        "tableName": "mathu_n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        816
+      ],
+      "id": "f762888a-93d7-4e3b-bdcf-16b7dd7ef167",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "nZ41rGQPdopybjxo",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this to retrieve information about the candidate's resume including their experience, skills, projects, education, and background. Call this tool when you need specific details about the candidate to ask relevant questions.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "topK": 10,
+        "options": {
+          "queryName": "match_documents_upo",
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "session_id",
+                "value": "={{$json.body.sessionId}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        752
+      ],
+      "id": "f6a0c7b9-2f71-45e1-9ff3-6eb1efb47cdb",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "brIiXKjDsVpruT0l",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        912
+      ],
+      "id": "db614be1-a05b-4a87-887b-c967b0282d5e",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XpWhqTGNv6uXGtld",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1152,
+        0
+      ],
+      "id": "0eb57690-c2f0-4faa-ab0d-1ebe71f6881c",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "brIiXKjDsVpruT0l",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        176
+      ],
+      "id": "f4d10b45-4856-4aee-bc98-30c473b236eb",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XpWhqTGNv6uXGtld",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{$('Extract Session Data').item.json.sessionId}}_{{Date.now()}}"
+              },
+              {
+                "name": "version",
+                "value": "=1"
+              },
+              {
+                "name": "file_type",
+                "value": "={{$('Extract Session Data').item.json.resumeMimeType}}"
+              },
+              {
+                "name": "modified",
+                "value": "={{new Date().toISOString()}}"
+              },
+              {
+                "name": "session_id",
+                "value": "={{$('Extract Session Data').item.json.sessionId}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        144
+      ],
+      "id": "4ec2eca2-cb83-4fdb-81ff-0e9a44efe431",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        16
+      ],
+      "id": "54c1e8a0-919b-46d0-8b7e-d0b4594575e8",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        272
+      ],
+      "id": "77153b4c-af8d-4def-9dd1-aa351b984467",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"message\": \"Resume processed successfully! Let's start your interview.\",\n  \"question\": \"Hello! I've analyzed your resume. Let's begin with a simple question: Tell me about yourself and your background.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1616,
+        0
+      ],
+      "id": "2ec0924c-5a72-4029-b13f-66b8da734d4b",
+      "name": "Respond to Upload"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"response\": {{$json.response.toJsonString()}},\n  \"status\": {{$json.status.toJsonString()}}\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1904,
+        800
+      ],
+      "id": "fb0197a8-efb5-483a-97da-b11bc9e3a7c9",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b4a80045-ffb0-4b6c-ab37-92b61461ef3c",
+              "name": "sessionId",
+              "value": "={{$json.body.sessionId}}",
+              "type": "string"
+            },
+            {
+              "id": "a9431b2a-55e1-45f4-aebe-692899d44a57",
+              "name": "jobDescription",
+              "value": "={{$json.body.jobDescription}}",
+              "type": "string"
+            },
+            {
+              "id": "054236f1-2837-481b-b443-9cf5622f2d15",
+              "name": "resumeData",
+              "value": "={{$json.body.resumeData}}",
+              "type": "string"
+            },
+            {
+              "id": "245d4185-5dc2-4a1d-a869-a3462bd18f33",
+              "name": "resumeFileName",
+              "value": "={{$json.body.resumeFileName}}",
+              "type": "string"
+            },
+            {
+              "id": "36d281e1-39d8-40d1-bb80-56a76e804d72",
+              "name": "resumeMimeType",
+              "value": "={{$json.body.resumeMimeType}}",
+              "type": "string"
+            },
+            {
+              "id": "558f06ee-13e9-43f6-a864-da3e5a3ed963",
+              "name": "resumeFileSize",
+              "value": "={{$json.body.resumeFileSize}}",
+              "type": "string"
+            },
+            {
+              "id": "6b2d88da-bb17-43e8-91cc-b9838e6e4882",
+              "name": "candidateEmail",
+              "value": "={{$json.body.candidateEmail}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        16
+      ],
+      "id": "5d470765-09ce-47d0-b6ac-6fe4e047d72f",
+      "name": "Extract Session Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if we have base64 resume data\nconst resumeData = $input.item.json.resumeData;\n\nconsole.log(\"Checking for resumeData:\", !!resumeData);\nconsole.log(\"ResumeData type:\", typeof resumeData);\n\nif (resumeData && resumeData.length > 0) {\n  console.log(\"Resume data length:\", resumeData.length);\n  \n  try {\n    // Convert base64 string to buffer\n    const buffer = Buffer.from(resumeData, 'base64');\n    console.log(\"Buffer created, size:\", buffer.length);\n    \n    // Return the item with binary data attached\n    return {\n      json: {\n        ...$input.item.json,\n        debug_buffer_size: buffer.length,\n        debug_has_binary: true\n      },\n      binary: {\n        resume: {\n          data: buffer,\n          mimeType: $input.item.json.resumeMimeType || 'application/pdf',\n          fileName: $input.item.json.resumeFileName || 'resume.pdf',\n          fileExtension: 'pdf'\n        }\n      }\n    };\n  } catch (error) {\n    console.log(\"Buffer creation error:\", error.message);\n    return {\n      json: {\n        ...$input.item.json,\n        debug_error: error.message,\n        debug_failed_conversion: true\n      }\n    };\n  }\n} else {\n  console.log(\"No resume data found or empty\");\n  console.log(\"Available keys:\", Object.keys($input.item.json));\n  return {\n    json: {\n      ...$input.item.json,\n      debug_no_resume_data: true,\n      debug_available_keys: Object.keys($input.item.json)\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "98fc07f2-cfa6-41bf-b705-ae10460ac6b3",
+      "name": "Convert Base64 to Binary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get first input safely\nconst firstInput = $input.first() || { json: {} };\n\n// Try multiple possible fields where AI output might be stored\nlet aiOutput = firstInput.json.response\n            || firstInput.json.output\n            || firstInput.json.text\n            || firstInput.json.content\n            || firstInput.json.message\n            || firstInput.json.result \n            || \"\";\n\n// Fallback\nif (!aiOutput || (typeof aiOutput === \"string\" && aiOutput.trim() === \"\")) {\n  aiOutput = \"I'm sorry, I couldn't generate a response. Could you please try again?\";\n}\n\n// Ensure it's a string\nif (typeof aiOutput !== \"string\") {\n  aiOutput = String(aiOutput);\n}\n\n// ✅ Do NOT escape quotes/backslashes manually — let JSON.stringify handle it\nreturn [{\n  json: {\n    response: aiOutput,\n    status: \"success\"\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        832
+      ],
+      "id": "ae04e36d-acb2-4e0a-84b8-8f25ac46c398",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sessionId = $('Extract Session Data').item.json.sessionId;\nconsole.log('Processing resume for session:', sessionId);\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        16
+      ],
+      "id": "c8be789e-cfdd-4fe9-8e3a-640793034e2f",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d43db59-87d7-4507-9b50-1ea28f91bb63",
+              "leftValue": "=={{ $json.response || $json.output || $json.text || '' }}",
+              "rightValue": "INTERVIEW_COMPLETE:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "efca5d01-d570-4603-acff-9d239823e3fc",
+              "leftValue": "={{ ($('Interview Chat1').item.json.body.message || '').toString().trim().toUpperCase() }}",
+              "rightValue": "END",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1168,
+        512
+      ],
+      "id": "4e990cc6-1bab-4a9c-b754-58ffedb88688",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bda27770-de0f-4e86-aee3-a24029d3cf5a",
+              "name": "=feedbackContent",
+              "value": "={{ ($json.response || $json.output || 'Thank you for completing the technical interview. Your feedback has been generated based on our conversation.').replace('INTERVIEW_COMPLETE:', '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "3cc39c3b-a0da-496a-945b-40c9f92dc753",
+              "name": "candidateEmail",
+              "value": "={{ $('Interview Chat1').item.json.body.candidateEmail }}",
+              "type": "string"
+            },
+            {
+              "id": "a9125da0-740d-49e6-a552-58dd881fd5d4",
+              "name": "sessionId",
+              "value": "={{ $('Interview Chat1').item.json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "26088f08-d6ec-4289-8951-43238f7417d9",
+              "name": "candidateName",
+              "value": "=Candidate",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1456,
+        416
+      ],
+      "id": "87f9c6c0-da67-4214-94f2-85ffa40d9720",
+      "name": "Prepare Email Data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.candidateEmail }}",
+        "subject": "=Technical Interview Feedback - {{ new Date().toLocaleDateString() }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;\">     <div style=\"background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;\">         <h2 style=\"margin: 0;\">🎯 Technical Interview Feedback</h2>         <p style=\"margin: 10px 0 0 0;\">Session ID: {{ $json.sessionId }}</p>     </div>          <div style=\"background: #f9fafb; padding: 20px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;\">         <div style=\"background: white; padding: 20px; border-radius: 8px; white-space: pre-line; line-height: 1.6;\">             {{ $json.feedbackContent }}         </div>                  <div style=\"margin-top: 20px; padding: 15px; background: #e0f2fe; border-radius: 8px; border-left: 4px solid #0ea5e9;\">             <p style=\"margin: 0; color: #0369a1;\">                 <strong>Next Steps:</strong><br>                 • Review the feedback points above<br>                 • Practice the suggested areas for improvement<br>                 • Keep preparing for your target role<br>                 • You've got this! 💪             </p>         </div>                  <div style=\"margin-top: 20px; text-align: center; color: #6b7280; font-size: 14px;\">             <p>Thank you for using our AI Technical Interview platform!</p>         </div>     </div> </div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1616,
+        464
+      ],
+      "id": "a61839e0-d55d-43f0-b26f-bc85ee6ec967",
+      "name": "Send a message",
+      "webhookId": "c0fd6f95-4cfa-41a7-91ef-818a3fc04260",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mozpalkP4btBi02P",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/upload-resume",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "resume"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        32
+      ],
+      "id": "01509f7d-7ac8-45a5-b6e3-5a3611f0581b",
+      "name": "Upload Resume1",
+      "webhookId": "5fbb3086-065d-41e9-ab5d-b5f339d352c0"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/interview-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        432
+      ],
+      "id": "d6bea466-ac7d-4304-84a1-6f9907a263f3",
+      "name": "Interview Chat1",
+      "webhookId": "145d8cac-21cc-4221-bff8-995d8b806fdf"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edc2a743-ee9c-4f16-9ec1-dacae8f99d39",
+              "name": "response",
+              "value": "=✅ Thanks for completing the interview! We’ve sent feedback to your email.",
+              "type": "string"
+            },
+            {
+              "id": "c184b0c6-eb5a-461b-a249-834e53eae535",
+              "name": "status",
+              "value": "=success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1824,
+        464
+      ],
+      "id": "5d63a684-7379-46ce-b35c-ceaf9f6277b7",
+      "name": "Final Response"
+    }
+  ],
+  "pinData": {
+    "Interview Chat1": [
+      {
+        "json": {
+          "headers": {
+            "host": "skateruai.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+            "content-length": "111",
+            "accept": "application/json",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "96.242.29.142",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "97a1458ad1b08ae3-EWR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://mathumathi0989.github.io",
+            "priority": "u=1, i",
+            "referer": "https://mathumathi0989.github.io/",
+            "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Google Chrome\";v=\"139\", \"Chromium\";v=\"139\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "96.242.29.142, 104.23.187.149",
+            "x-forwarded-host": "skateruai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-44-68df68bcf-fzkfl",
+            "x-is-trusted": "yes",
+            "x-real-ip": "96.242.29.142"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "no",
+            "sessionId": "tech_interview_1757028507168_ka3o0f7z3",
+            "candidateEmail": "mathumathi.b@gmail.com"
+          },
+          "webhookUrl": "https://skateruai.app.n8n.cloud/webhook/interview-chat",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Respond to Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Session Data": {
+      "main": [
+        [
+          {
+            "node": "Convert Base64 to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Base64 to Binary": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Resume1": {
+      "main": [
+        [
+          {
+            "node": "Extract Session Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interview Chat1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cbf60aeb-79fc-4358-b091-883b6a31966a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "71de14421385159897fc69f82097328e81facffe4bfdac3121fd734bfc63f804"
+  },
+  "id": "W6BMdEaUuq6imyI9",
+  "tags": []
+}
