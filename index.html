@@ -239,6 +239,25 @@
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
+
+        .input-group textarea {
+    flex: 1;
+    padding: 14px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 15px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 50px;
+    max-height: 120px;
+}
+
+.input-group textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
         
         .send-btn {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -382,7 +401,7 @@
         
         <div class="chat-input" id="chatInput">
             <div class="input-group">
-                <input type="text" id="messageInput" placeholder="Type your answer here..." maxlength="800">
+             <textarea id="messageInput" placeholder="Type your answer here..." maxlength="800" rows="3"></textarea>
                 <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
             </div>
             <p class="end-instruction">
@@ -725,11 +744,12 @@ if (data.response && data.response.includes("✅ Thanks for completing")) {
         // Event listeners
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
-            messageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
+           messageInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
         }
         
         const resumeFileInput = document.getElementById('resumeFile');
