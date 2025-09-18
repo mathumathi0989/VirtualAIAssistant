@@ -952,14 +952,9 @@
                     const messageInput = document.getElementById('messageInput');
                     messageInput.value = transcribedText;
                     
-                    // Show brief preview of what was transcribed
-                    addMessage(`🎤 "${transcribedText}"`, true);
-                    
                     // Automatically send the transcribed message after a brief delay
                     setTimeout(() => {
-                        // Clear the input since we already showed the message
-                        messageInput.value = '';
-                        sendMessage(transcribedText);
+                        sendMessage();
                     }, 800);
                     
                     console.log('✅ Audio transcribed:', transcribedText);
