@@ -948,19 +948,22 @@
                 const transcribedText = data.transcription || data.text || '';
                 
                 if (transcribedText.trim()) {
-                    // Put transcribed text in the input field
-                    const messageInput = document.getElementById('messageInput');
-                    messageInput.value = transcribedText;
-                    
-                    // Automatically send the transcribed message after a brief delay
-                    setTimeout(() => {
-                        sendMessage();
-                    }, 800);
-                    
-                    console.log('✅ Audio transcribed:', transcribedText);
-                } else {
-                    addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
-                }
+    // Put transcribed text in the input field
+    const messageInput = document.getElementById('messageInput');
+    messageInput.value = transcribedText;
+    
+    // Focus on the input field so user can edit if needed
+    messageInput.focus();
+    
+    console.log('✅ Audio transcribed:', transcribedText);
+    
+    // Optional: Show a brief message that transcription is complete
+    // You could add this if you want visual feedback
+    // addMessage('🎤 Speech transcribed. You can edit the text and click Send.', false);
+    
+} else {
+    addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
+}
                 
             } catch (error) {
                 hideTypingIndicator();
