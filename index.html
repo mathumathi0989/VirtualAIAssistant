@@ -66,6 +66,33 @@
             display: none;
             backdrop-filter: blur(10px);
         }
+
+        .audio-controls {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: rgba(255, 255, 255, 0.25);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-size: 18px;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .audio-controls:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .audio-controls.muted {
+            opacity: 0.5;
+        }
         
         .chat-messages {
             flex: 1;
@@ -84,6 +111,7 @@
             line-height: 1.5;
             word-wrap: break-word;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
         }
         
         .message.ai {
@@ -92,6 +120,16 @@
             align-self: flex-start;
             border-bottom-left-radius: 8px;
             border: 1px solid #e5e7eb;
+        }
+
+        .message.ai.speaking {
+            border-left: 3px solid #10b981;
+            animation: speaking-pulse 1.5s infinite;
+        }
+
+        @keyframes speaking-pulse {
+            0%, 100% { border-left-color: #10b981; }
+            50% { border-left-color: #34d399; }
         }
         
         .message.user {
@@ -106,6 +144,14 @@
             color: #dc2626;
             border: 1px solid #fecaca;
             align-self: center;
+        }
+
+        .audio-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+            opacity: 0.7;
         }
         
         .upload-section {
@@ -417,6 +463,13 @@
                 margin-top: 12px;
                 display: inline-block;
             }
+
+            .audio-controls {
+                position: static;
+                margin-top: 12px;
+                display: inline-block;
+                margin-right: 12px;
+            }
             
             .upload-section {
                 margin: 16px;
@@ -442,6 +495,9 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
+            <div class="audio-controls" id="audioToggle" onclick="toggleAudio()" title="Toggle audio responses">
+                🔊
+            </div>
             <h1>AI Technical Interview</h1>
             <p>Professional mock interview with expert-level technical questions</p>
             <div class="timer" id="timer"></div>
@@ -512,17 +568,29 @@
         let audioChunks = [];
         let candidateEmail = "";
         
+        // Audio response variables
+        let audioEnabled = true;
+        let currentAudio = null;
+        
         // Initialize session ID
         sessionId = 'tech_interview_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         console.log("🔧 Session ID:", sessionId);
         
-        function addMessage(content, isUser = false) {
+        function addMessage(content, isUser = false, hasAudio = false) {
             const messagesDiv = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
-            messageDiv.innerHTML = content;
+            
+            if (hasAudio && !isUser) {
+                messageDiv.innerHTML = content + '<div class="audio-indicator">🔊</div>';
+            } else {
+                messageDiv.innerHTML = content;
+            }
+            
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            return messageDiv;
         }
         
         function showTypingIndicator() {
@@ -572,6 +640,84 @@
                 timerElement.style.display = 'block';
                 updateTimer();
                 timerInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        // Audio Controls
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const toggle = document.getElementById('audioToggle');
+            toggle.textContent = audioEnabled ? '🔊' : '🔇';
+            toggle.classList.toggle('muted', !audioEnabled);
+            
+            // Stop current audio if disabling
+            if (!audioEnabled && currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+                // Remove speaking animation from all AI messages
+                document.querySelectorAll('.message.ai.speaking').forEach(msg => {
+                    msg.classList.remove('speaking');
+                });
+            }
+        }
+
+        function playAudioResponse(textToSpeak, messageElement = null) {
+            if (!audioEnabled || !textToSpeak) return;
+            
+            try {
+                // Stop any currently playing speech
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    // Remove speaking animation from all messages
+                    document.querySelectorAll('.message.ai.speaking').forEach(msg => {
+                        msg.classList.remove('speaking');
+                    });
+                }
+                
+                // Create speech synthesis utterance
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                
+                // Configure voice settings
+                utterance.rate = 0.9; // Slightly slower for clarity
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                
+                // Try to select a good English voice
+                const voices = window.speechSynthesis.getVoices();
+                const preferredVoice = voices.find(voice => 
+                    voice.lang === 'en-US' && voice.name.includes('Microsoft') 
+                ) || voices.find(voice => 
+                    voice.lang.startsWith('en')
+                ) || voices[0];
+                
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+                
+                // Add speaking animation to message
+                if (messageElement) {
+                    messageElement.classList.add('speaking');
+                }
+                
+                // Event handlers
+                utterance.onend = () => {
+                    if (messageElement) {
+                        messageElement.classList.remove('speaking');
+                    }
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event);
+                    if (messageElement) {
+                        messageElement.classList.remove('speaking');
+                    }
+                };
+                
+                // Speak the text
+                window.speechSynthesis.speak(utterance);
+                
+            } catch (error) {
+                console.error('Error with speech synthesis:', error);
             }
         }
         
@@ -696,7 +842,18 @@
             // Add first question from AI (if provided, otherwise it will come from the first chat response)
             if (data.question) {
                 setTimeout(() => {
-                    addMessage(data.question);
+                    const messageElement = addMessage(data.question, false, true);
+                    
+                    // Convert HTML to plain text and speak it
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.question;
+                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+                    
+                    if (textToSpeak.trim()) {
+                        setTimeout(() => {
+                            playAudioResponse(textToSpeak, messageElement);
+                        }, 800);
+                    }
                 }, 1500);
             }
             
@@ -782,16 +939,50 @@
 
                 // Add AI response - check multiple possible response fields
                 if (data.response) {
-                    addMessage(data.response);
+                    const messageElement = addMessage(data.response, false, true); // Always mark as having audio for Web Speech
+                    
+                    // Convert HTML to plain text for speech
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.response;
+                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+                    
+                    // Play speech after a small delay
+                    if (textToSpeak.trim()) {
+                        setTimeout(() => {
+                            playAudioResponse(textToSpeak, messageElement);
+                        }, 500);
+                    }
+                    
                     console.log("✅ Added AI response");
                 } else if (data.output) {
-                    addMessage(data.output);
+                    const messageElement = addMessage(data.output, false, true);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.output;
+                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+                    if (textToSpeak.trim()) {
+                        setTimeout(() => {
+                            playAudioResponse(textToSpeak, messageElement);
+                        }, 500);
+                    }
                     console.log("✅ Added AI output");
                 } else if (data.text) {
-                    addMessage(data.text);
+                    const messageElement = addMessage(data.text, false, true);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.text;
+                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+                    if (textToSpeak.trim()) {
+                        setTimeout(() => {
+                            playAudioResponse(textToSpeak, messageElement);
+                        }, 500);
+                    }
                     console.log("✅ Added AI text");
                 } else if (typeof data === 'string') {
-                    addMessage(data);
+                    const messageElement = addMessage(data, false, true);
+                    if (data.trim()) {
+                        setTimeout(() => {
+                            playAudioResponse(data, messageElement);
+                        }, 500);
+                    }
                     console.log("✅ Added string response");
                 } else {
                     addMessage("I need a moment to process your response. Could you please elaborate on that?");
@@ -948,22 +1139,18 @@
                 const transcribedText = data.transcription || data.text || '';
                 
                 if (transcribedText.trim()) {
-    // Put transcribed text in the input field
-    const messageInput = document.getElementById('messageInput');
-    messageInput.value = transcribedText;
-    
-    // Focus on the input field so user can edit if needed
-    messageInput.focus();
-    
-    console.log('✅ Audio transcribed:', transcribedText);
-    
-    // Optional: Show a brief message that transcription is complete
-    // You could add this if you want visual feedback
-    // addMessage('🎤 Speech transcribed. You can edit the text and click Send.', false);
-    
-} else {
-    addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
-}
+                    // Put transcribed text in the input field
+                    const messageInput = document.getElementById('messageInput');
+                    messageInput.value = transcribedText;
+                    
+                    // Focus on the input field so user can edit if needed
+                    messageInput.focus();
+                    
+                    console.log('✅ Audio transcribed:', transcribedText);
+                    
+                } else {
+                    addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
+                }
                 
             } catch (error) {
                 hideTypingIndicator();
@@ -1075,8 +1262,11 @@
             }
         });
         
-        console.log("🔧 Frontend initialized with speech-to-text. API Base:", API_BASE);
-        console.log("💡 Tip: Hold spacebar to record (when not typing)");
+        console.log("🔧 Frontend initialized with TTS support. API Base:", API_BASE);
+        console.log("💡 Tips:");
+        console.log("   - Click speaker icon to toggle audio responses");
+        console.log("   - Hold spacebar to record (when not typing)");
+        console.log("   - AI responses will be spoken automatically");
     </script>
 </body>
 </html>
