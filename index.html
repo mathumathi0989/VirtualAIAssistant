@@ -94,44 +94,7 @@
             opacity: 0.5;
         }
 
-        .voice-controls {
-            position: absolute;
-            top: 24px;
-            left: 80px;
-            background: rgba(255, 255, 255, 0.25);
-            padding: 8px 12px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            display: none;
-            gap: 8px;
-            align-items: center;
-        }
 
-        .voice-controls select {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 15px;
-            padding: 6px 12px;
-            font-size: 12px;
-            color: #374151;
-            cursor: pointer;
-        }
-
-        .voice-controls button {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 12px;
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            color: #374151;
-            transition: all 0.2s ease;
-        }
-
-        .voice-controls button:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: scale(1.02);
-        }
         
         .chat-messages {
             flex: 1;
@@ -509,13 +472,6 @@
                 display: inline-block;
                 margin-right: 12px;
             }
-
-            .voice-controls {
-                position: static;
-                margin-top: 12px;
-                display: inline-flex;
-                margin-right: 12px;
-            }
             
             .upload-section {
                 margin: 16px;
@@ -543,12 +499,6 @@
         <div class="chat-header">
             <div class="audio-controls" id="audioToggle" onclick="toggleAudio()" title="Toggle audio responses">
                 🔊
-            </div>
-            <div class="voice-controls" id="voiceControls">
-                <select id="voiceSelect" onchange="testSelectedVoice()">
-                    <option value="">Select AI Voice...</option>
-                </select>
-                <button id="testVoiceBtn" onclick="testSelectedVoice()">Test</button>
             </div>
             <h1>AI Technical Interview</h1>
             <p>Professional mock interview with expert-level technical questions</p>
@@ -623,88 +573,35 @@
         // Audio response variables
         let audioEnabled = true;
         let currentAudio = null;
-        
-        // Voice configuration
         let selectedVoice = null;
-        let availableVoices = [];
         
         // Initialize session ID
         sessionId = 'tech_interview_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         console.log("🔧 Session ID:", sessionId);
 
-        // Load and populate voices
-        function loadVoices() {
-            return new Promise((resolve) => {
-                let voices = window.speechSynthesis.getVoices();
-                
-                if (voices.length === 0) {
-                    // Voices not loaded yet, wait for event
-                    window.speechSynthesis.addEventListener('voiceschanged', () => {
-                        voices = window.speechSynthesis.getVoices();
-                        populateVoiceSelect(voices);
-                        resolve(voices);
-                    });
-                } else {
-                    populateVoiceSelect(voices);
-                    resolve(voices);
-                }
-            });
-        }
-
-        function populateVoiceSelect(voices) {
-            availableVoices = voices.filter(voice => voice.lang.startsWith('en'));
-            const voiceSelect = document.getElementById('voiceSelect');
-            const voiceControls = document.getElementById('voiceControls');
+        // Set specific voice on page load
+        function initializeVoice() {
+            const voices = window.speechSynthesis.getVoices();
             
-            if (voiceSelect && availableVoices.length > 0) {
-                voiceSelect.innerHTML = '<option value="">Select AI Voice...</option>';
-                
-                availableVoices.forEach((voice, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = `${voice.name} (${voice.lang})`;
-                    voiceSelect.appendChild(option);
-                });
-                
-                voiceControls.style.display = 'flex';
-                
-                // Auto-select a good default voice
-                const defaultVoice = availableVoices.find(voice => 
-                    voice.name.includes('Microsoft') && voice.lang === 'en-US'
-                ) || availableVoices.find(voice => 
-                    voice.lang === 'en-US'
-                ) || availableVoices[0];
-                
-                if (defaultVoice) {
-                    const defaultIndex = availableVoices.indexOf(defaultVoice);
-                    voiceSelect.value = defaultIndex;
-                    selectedVoice = defaultVoice;
-                }
+            // Look for "Google US English" specifically
+            selectedVoice = voices.find(voice => 
+                voice.name === 'Google US English'
+            ) || voices.find(voice => 
+                voice.name.includes('Google') && voice.lang.startsWith('en')
+            ) || voices.find(voice => 
+                voice.lang === 'en-US'
+            ) || voices[0];
+            
+            if (selectedVoice) {
+                console.log("🎤 Using voice:", selectedVoice.name, "(" + selectedVoice.lang + ")");
             }
         }
 
-        function testSelectedVoice() {
-            const voiceSelect = document.getElementById('voiceSelect');
-            const selectedIndex = voiceSelect.value;
-            
-            if (selectedIndex !== "" && availableVoices[selectedIndex]) {
-                selectedVoice = availableVoices[selectedIndex];
-                
-                // Test with sample interview question
-                const testText = "Hello! I'm your AI interviewer. How does my voice sound for conducting your technical interview?";
-                
-                if (window.speechSynthesis.speaking) {
-                    window.speechSynthesis.cancel();
-                }
-                
-                const utterance = new SpeechSynthesisUtterance(testText);
-                utterance.voice = selectedVoice;
-                utterance.rate = 0.9;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-                
-                window.speechSynthesis.speak(utterance);
-            }
+        // Initialize voice when voices are loaded
+        if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.addEventListener('voiceschanged', initializeVoice);
+        } else {
+            initializeVoice();
         }
         
         function addMessage(content, isUser = false, hasAudio = false) {
@@ -808,26 +705,15 @@
                 // Create speech synthesis utterance
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 
-                // Use selected voice or fallback to default
+                // Use the selected voice (Google US English or fallback)
                 if (selectedVoice) {
                     utterance.voice = selectedVoice;
-                } else {
-                    const voices = window.speechSynthesis.getVoices();
-                    const preferredVoice = voices.find(voice => 
-                        voice.lang === 'en-US' && voice.name.includes('Microsoft') 
-                    ) || voices.find(voice => 
-                        voice.lang.startsWith('en')
-                    ) || voices[0];
-                    
-                    if (preferredVoice) {
-                        utterance.voice = preferredVoice;
-                    }
                 }
                 
-                // Configure voice settings
-                utterance.rate = 0.9; // Slightly slower for clarity
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
+                // Configure voice settings for professional interview sound
+                utterance.rate = 0.85;  // Slightly slower for clarity
+                utterance.pitch = 1.0;  // Normal pitch
+                utterance.volume = 1.0; // Full volume
                 
                 // Add speaking animation to message
                 if (messageElement) {
@@ -1399,15 +1285,14 @@
 
         // Initialize voices when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            loadVoices();
+            initializeVoice();
         });
         
-        console.log("🔧 Frontend initialized with TTS support and voice selection. API Base:", API_BASE);
+        console.log("🔧 Frontend initialized with fixed Google US English voice. API Base:", API_BASE);
         console.log("💡 Tips:");
         console.log("   - Click speaker icon to toggle audio responses");
-        console.log("   - Select AI voice from dropdown and test it");
+        console.log("   - AI will speak using Google US English voice");
         console.log("   - Hold spacebar to record (when not typing)");
-        console.log("   - AI responses will be spoken automatically");
     </script>
 </body>
 </html>
