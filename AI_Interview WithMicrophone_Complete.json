@@ -1,0 +1,1206 @@
+{
+  "name": "AI_Interview WithMicrophone_Complete",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User said: {{ $json.body.message }}\n\n\nPlease respond with a relevant interview question based on the conversation context {{ $json.body.sessionId }} and the candidate's resume.\n Use the resume_agent tool if you need specific information about their background.\n\nIMPORTANT: Never finalize the interview until user explicitly types \"END\".",
+        "options": {
+          "systemMessage": "=Role  \nYou are a professional AI Interviewer conducting structured, interactive mock interviews.  \n\nCandidate documents come from Supabase:  \n- Resume (document_type = \"resume\")  \n- Job Description (document_type = \"job_description\")  \n\nThe Job Description is already parsed and available.  \n\n---\n\n## Core Rules  \n\n### Mode Selection  \n1. If ONLY Resume is present →  \n   - Use resume’s skills, tech stacks, and responsibilities.  \n   - Max 3 questions per topic.  \n   - Cover technical, behavioral, and techno-behavioral.  \n\n2. If BOTH Resume + Job Description are present →  \n   - Treat Job Description as **primary**. Internally create **JD_Topics[]** from it.  \n   - Always start with JD_Topics.  \n   - Maintain **70% JD_Topics questions, 30% resume-based questions**.  \n   - Resume-based questions are allowed only if:  \n     - They align with the active JD_Topic, OR  \n     - All JD_Topics[] are already covered.  \n\n---\n\n### Questioning Style  \n- **One question at a time. No multiple choice.**  \n- Questions should sound like real interview questions. Example:  \n  - Instead of: “Which of these is correct about APIs?”  \n  - Ask: “Can you explain how you have tested APIs in your past projects?”  \n- Mix technical, behavioral, and situational questions.  \n- Keep questions short and professional.  \n\n---\n\n### Depth & Follow-ups  \n- If candidate answers correctly → ask up to **2 deeper follow-ups** (max 3 total for topic).  \n- If incorrect → rephrase or retry (max 3 attempts).  \n- After 3 questions → **switch immediately to a new topic**.  \n\n---\n\n### Topic Switching  \n- Track internally with **TopicCounter**.  \n- Strictly enforce max 3 questions per topic.  \n- If candidate answers off-topic → acknowledge briefly, then redirect to JD_Topics.  \n\n---\n\n### End of Interview  \nStop when:  \n- Candidate types **“END”**, OR  \n- 15–30 minutes have passed.  \n\nThen provide **structured feedback** in this format:  \n\n**INTERVIEW_COMPLETE**  \n\n1. **Summary of performance**  \n2. **Key strengths** (with examples from candidate’s answers)  \n3. **Areas to improve** (use STAR: Situation, Task, Action, Result)  \n4. **Overall score** (1–10)  \n5. **Encouragement & next steps**  \n\n---\n\n### Feedback (STAR Format)  \n- **Situation** → context of the question.  \n- **Task** → what was expected.  \n- **Action** → what candidate did.  \n- **Result** → outcome or suggested improvement.  \n\n---\n\n### Interviewer Tone  \n- Professional, supportive, and realistic.  \n- Encourage structured thinking.  \n- Do not quiz. No multiple choice.  \n- Never repeat the same question for the same candidate within 1 month.  \n\n---\n\n⚠️ Enforcement Rules  \n- Max 3 questions per topic, no exceptions.  \n- JD_Topics always take priority if JD is provided.  \n- Keep strict **70% JD vs 30% Resume balance**.  \n- Never drift into unrelated chat. Stay in mock interview mode.  \n- Always provide **final structured STAR feedback** at the end.  \n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        592
+      ],
+      "id": "96d7cfaf-9f83-4383-9f5e-06718dd85f8b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        848
+      ],
+      "id": "3c284420-24a9-4492-a2ac-eb4d6df8ab10",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ThEciIjMfCUwLHaB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId || $('Extract Session Data').item.json.sessionId }}",
+        "tableName": "mathu_n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1088,
+        896
+      ],
+      "id": "1611e69c-3525-4e6e-aa91-8d6b93effd34",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "TuB6UtCKN4d3BKWi",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this to retrieve information about the candidate's resume including their experience, skills, projects, education, and background. Call this tool when you need specific details about the candidate to ask relevant questions.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "topK": 10,
+        "options": {
+          "queryName": "match_documents_upo",
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "session_id",
+                "value": "={{$json.body.sessionId}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -848,
+        832
+      ],
+      "id": "216e02e9-d838-495b-9940-c7897bf68cf0",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "o4GRN3Fmc4HhGY8D",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        992
+      ],
+      "id": "bbcc1e10-1927-4ba1-9905-2fbe2fe200b5",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ThEciIjMfCUwLHaB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        48
+      ],
+      "id": "1f9a05f6-8b4b-4dc8-b196-6dd6a4c9687e",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "o4GRN3Fmc4HhGY8D",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        256
+      ],
+      "id": "5b72706a-3b2a-4711-97e7-b1bf374a37d1",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ThEciIjMfCUwLHaB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{$('Extract Session Data').item.json.sessionId}}_{{Date.now()}}"
+              },
+              {
+                "name": "version",
+                "value": "=1"
+              },
+              {
+                "name": "file_type",
+                "value": "={{$('Extract Session Data').item.json.resumeMimeType}}"
+              },
+              {
+                "name": "modified",
+                "value": "={{new Date().toISOString()}}"
+              },
+              {
+                "name": "session_id",
+                "value": "={{$('Extract Session Data').item.json.sessionId}}"
+              },
+              {
+                "name": "job_description",
+                "value": "={{$('Extract Session Data').item.json.jobDescription || ''}}"
+              },
+              {
+                "name": "document_type",
+                "value": "resume"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        224
+      ],
+      "id": "5be0b98e-19d1-470e-aefa-b112a09d33ed",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        96
+      ],
+      "id": "ec2fc5a4-c8f5-4881-94aa-b67c713754ac",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        352
+      ],
+      "id": "a5bc3c56-56d1-4542-a5ff-786c81dd509d",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"message\": \"Resume processed successfully! Let's start your interview.\",\n  \"question\": \"Hello! I've analyzed your resume. Let's begin with a simple question: Tell me about yourself and your background.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f62ad273-b495-4f16-958a-1c81b021136e",
+      "name": "Respond to Upload"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"response\": {{$json.response.toJsonString()}},\n  \"status\": {{$json.status.toJsonString()}}\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -32,
+        880
+      ],
+      "id": "546ec763-3754-4599-ad3a-7d7c266fa573",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b4a80045-ffb0-4b6c-ab37-92b61461ef3c",
+              "name": "sessionId",
+              "value": "={{$json.body.sessionId}}",
+              "type": "string"
+            },
+            {
+              "id": "a9431b2a-55e1-45f4-aebe-692899d44a57",
+              "name": "jobDescription",
+              "value": "={{$json.body.jobDescription}}",
+              "type": "string"
+            },
+            {
+              "id": "054236f1-2837-481b-b443-9cf5622f2d15",
+              "name": "resumeData",
+              "value": "={{$json.body.resumeData}}",
+              "type": "string"
+            },
+            {
+              "id": "245d4185-5dc2-4a1d-a869-a3462bd18f33",
+              "name": "resumeFileName",
+              "value": "={{$json.body.resumeFileName}}",
+              "type": "string"
+            },
+            {
+              "id": "36d281e1-39d8-40d1-bb80-56a76e804d72",
+              "name": "resumeMimeType",
+              "value": "={{$json.body.resumeMimeType}}",
+              "type": "string"
+            },
+            {
+              "id": "558f06ee-13e9-43f6-a864-da3e5a3ed963",
+              "name": "resumeFileSize",
+              "value": "={{$json.body.resumeFileSize}}",
+              "type": "string"
+            },
+            {
+              "id": "6b2d88da-bb17-43e8-91cc-b9838e6e4882",
+              "name": "candidateEmail",
+              "value": "={{$json.body.candidateEmail}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1904,
+        144
+      ],
+      "id": "1607cd70-7030-4ad2-b032-3e2ee91ca49b",
+      "name": "Extract Session Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if we have base64 resume data\nconst resumeData = $input.item.json.resumeData;\n\nconsole.log(\"Checking for resumeData:\", !!resumeData);\nconsole.log(\"ResumeData type:\", typeof resumeData);\n\nif (resumeData && resumeData.length > 0) {\n  console.log(\"Resume data length:\", resumeData.length);\n  \n  try {\n    // Convert base64 string to buffer\n    const buffer = Buffer.from(resumeData, 'base64');\n    console.log(\"Buffer created, size:\", buffer.length);\n    \n    // Return the item with binary data attached\n    return {\n      json: {\n        ...$input.item.json,\n        debug_buffer_size: buffer.length,\n        debug_has_binary: true\n      },\n      binary: {\n        resume: {\n          data: buffer,\n          mimeType: $input.item.json.resumeMimeType || 'application/pdf',\n          fileName: $input.item.json.resumeFileName || 'resume.pdf',\n          fileExtension: 'pdf'\n        }\n      }\n    };\n  } catch (error) {\n    console.log(\"Buffer creation error:\", error.message);\n    return {\n      json: {\n        ...$input.item.json,\n        debug_error: error.message,\n        debug_failed_conversion: true\n      }\n    };\n  }\n} else {\n  console.log(\"No resume data found or empty\");\n  console.log(\"Available keys:\", Object.keys($input.item.json));\n  return {\n    json: {\n      ...$input.item.json,\n      debug_no_resume_data: true,\n      debug_available_keys: Object.keys($input.item.json)\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        80
+      ],
+      "id": "8946b98a-84cf-452c-8079-db377b55bd80",
+      "name": "Convert Base64 to Binary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get first input safely\nconst firstInput = $input.first() || { json: {} };\n\n// Try multiple possible fields where AI output might be stored\nlet aiOutput = firstInput.json.response\n            || firstInput.json.output\n            || firstInput.json.text\n            || firstInput.json.content\n            || firstInput.json.message\n            || firstInput.json.result \n            || \"\";\n\n// Fallback\nif (!aiOutput || (typeof aiOutput === \"string\" && aiOutput.trim() === \"\")) {\n  aiOutput = \"I'm sorry, I couldn't generate a response. Could you please try again?\";\n}\n\n// Ensure it's a string\nif (typeof aiOutput !== \"string\") {\n  aiOutput = String(aiOutput);\n}\n\n// ✅ Do NOT escape quotes/backslashes manually — let JSON.stringify handle it\nreturn [{\n  json: {\n    response: aiOutput,\n    status: \"success\"\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        912
+      ],
+      "id": "201fae3c-fcfa-4ce5-a00f-272aad1884aa",
+      "name": "Format Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sessionId = $('Extract Session Data').item.json.sessionId;\nconsole.log('Processing resume for session:', sessionId);\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        96
+      ],
+      "id": "51fb7b49-6055-4d86-a004-315114b1f911",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d43db59-87d7-4507-9b50-1ea28f91bb63",
+              "leftValue": "=={{ $json.response || $json.output || $json.text || '' }}",
+              "rightValue": "INTERVIEW_COMPLETE:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "efca5d01-d570-4603-acff-9d239823e3fc",
+              "leftValue": "={{ ($('Interview Chat').item.json.body.message || '').toString().trim().toUpperCase() }}",
+              "rightValue": "END",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -768,
+        592
+      ],
+      "id": "aa822d8a-7a05-46a5-8076-4ef143f0a1f7",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bda27770-de0f-4e86-aee3-a24029d3cf5a",
+              "name": "=feedbackContent",
+              "value": "={{ ($json.response || $json.output || 'Thank you for completing the technical interview. Your feedback has been generated based on our conversation.').replace('INTERVIEW_COMPLETE:', '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "3cc39c3b-a0da-496a-945b-40c9f92dc753",
+              "name": "candidateEmail",
+              "value": "={{ $('Interview Chat').item.json.body.candidateEmail }}",
+              "type": "string"
+            },
+            {
+              "id": "a9125da0-740d-49e6-a552-58dd881fd5d4",
+              "name": "sessionId",
+              "value": "={{ $('Interview Chat').item.json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "26088f08-d6ec-4289-8951-43238f7417d9",
+              "name": "candidateName",
+              "value": "=Candidate",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        496
+      ],
+      "id": "c892f4b1-e1e8-4baa-bd6a-f8e32ff27f2e",
+      "name": "Prepare Email Data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.candidateEmail }}",
+        "subject": "=Technical Interview Feedback - {{ new Date().toLocaleDateString() }}",
+        "message": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;\">     <div style=\"background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;\">         <h2 style=\"margin: 0;\">🎯 Technical Interview Feedback</h2>         <p style=\"margin: 10px 0 0 0;\">Session ID: {{ $json.sessionId }}</p>     </div>          <div style=\"background: #f9fafb; padding: 20px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;\">         <div style=\"background: white; padding: 20px; border-radius: 8px; white-space: pre-line; line-height: 1.6;\">             {{ $json.feedbackContent }}         </div>                  <div style=\"margin-top: 20px; padding: 15px; background: #e0f2fe; border-radius: 8px; border-left: 4px solid #0ea5e9;\">             <p style=\"margin: 0; color: #0369a1;\">                 <strong>Next Steps:</strong><br>                 • Review the feedback points above<br>                 • Practice the suggested areas for improvement<br>                 • Keep preparing for your target role<br>                 • You've got this! 💪             </p>         </div>                  <div style=\"margin-top: 20px; text-align: center; color: #6b7280; font-size: 14px;\">             <p>Thank you for using our AI Technical Interview platform!</p>         </div>     </div> </div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -320,
+        544
+      ],
+      "id": "5e051ade-5a7d-41a7-ab1e-59e531b4e344",
+      "name": "Send a message",
+      "webhookId": "bc086775-e121-403f-8299-fda911053e98",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OYRLQVo7wsihMTAJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edc2a743-ee9c-4f16-9ec1-dacae8f99d39",
+              "name": "response",
+              "value": "=✅ Thanks for completing the interview! We’ve sent feedback to your email.",
+              "type": "string"
+            },
+            {
+              "id": "c184b0c6-eb5a-461b-a249-834e53eae535",
+              "name": "status",
+              "value": "=success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -112,
+        544
+      ],
+      "id": "cdeb6455-980b-468b-ac2c-46d2e4358afc",
+      "name": "Final Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if job description exists\nconst jobDescription = $input.item.json.jobDescription;\n\nif (jobDescription && jobDescription.trim().length > 0) {\n  console.log(\"Job description found, length:\", jobDescription.length);\n  \n  return [{\n    json: {\n      ...$input.item.json,\n      hasJobDescription: true,\n      jobDescriptionContent: jobDescription.trim()\n    }\n  }];\n} else {\n  console.log(\"No job description provided\");\n  \n  return [{\n    json: {\n      ...$input.item.json,\n      hasJobDescription: false,\n      jobDescriptionContent: \"\"\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1696,
+        96
+      ],
+      "id": "1030db56-c5f8-4b70-9c80-b3b79225c7a4",
+      "name": "Prepare Job Description Document"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents_updated",
+          "mode": "list",
+          "cachedResultName": "documents_updated"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        48
+      ],
+      "id": "bb1d4617-97fc-4f0e-9b6d-5cae26015d75",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "o4GRN3Fmc4HhGY8D",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{$json.sessionId}}_job_description"
+              },
+              {
+                "name": "session_id",
+                "value": "={{$json.sessionId}}"
+              },
+              {
+                "name": "document_type",
+                "value": "job_description"
+              },
+              {
+                "name": "created_at",
+                "value": "={{new Date().toISOString()}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        208
+      ],
+      "id": "ad408c4d-140c-4aec-be12-754439810d1d",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        240
+      ],
+      "id": "79145522-e08f-4b60-aec0-d71355153db5",
+      "name": "Embeddings Google Gemini2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ThEciIjMfCUwLHaB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sessionData = $input.first().json;\nconst jobDescription = sessionData.jobDescription || '';\nconst sessionId = sessionData.sessionId;\n\n// ALWAYS return something, even if no job description\nif (jobDescription && jobDescription.trim().length > 0) {\n  return [{\n    json: {\n      content: `Job Description:\\n\\n${jobDescription.trim()}`,\n      sessionId: sessionId,\n      documentType: 'job_description'\n    }\n  }];\n} else {\n  // Instead of returning empty array, return a dummy item to keep flow going\n  return [{\n    json: {\n      content: 'No job description provided',\n      sessionId: sessionId,\n      documentType: 'placeholder',\n      skip: true\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        48
+      ],
+      "id": "952d1614-21c3-42e2-93a0-d674a3328517",
+      "name": "Create Job Description Document",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        416
+      ],
+      "id": "14560af7-5910-49b3-9263-d34f40ba115b",
+      "name": "Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/speech-to-text",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1536,
+        1392
+      ],
+      "id": "83d4b609-7cd3-45f5-a1d7-7973463c6eb5",
+      "name": "Webhook",
+      "webhookId": "2097cc74-f16d-40f6-a4e3-588de6ff37c2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const audioData = $input.item.json.body.audioData;\nconst sessionId = $input.item.json.body.sessionId;\nconst candidateEmail = $input.item.json.body.candidateEmail;\n\nif (!audioData) {\n    throw new Error('No audio data provided');\n}\n\ntry {\n    // Convert base64 to buffer\n    const buffer = Buffer.from(audioData, 'base64');\n    \n    console.log('Audio buffer size:', buffer.length);\n    \n    return [{\n        json: {\n            sessionId,\n            candidateEmail,\n            audioSize: buffer.length\n        },\n        binary: {\n            audio: {\n                data: buffer,\n                mimeType: 'audio/webm', // Match the frontend format\n                fileName: 'recording.webm'\n            }\n        }\n    }];\n} catch (error) {\n    throw new Error(`Failed to process audio data: ${error.message}`);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        1392
+      ],
+      "id": "c114b883-ea1d-452b-9fcd-7be68f6a521c",
+      "name": "Extract Audio Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const deepgramResponse = $input.item.json;\n\nconsole.log('Deepgram response:', JSON.stringify(deepgramResponse));\n\n// Check if response has error\nif (deepgramResponse.error) {\n    throw new Error(`Deepgram error: ${deepgramResponse.error}`);\n}\n\n// Extract transcription from Deepgram response\nlet transcription = '';\nlet confidence = 0;\n\nif (deepgramResponse.results && \n    deepgramResponse.results.channels && \n    deepgramResponse.results.channels[0] && \n    deepgramResponse.results.channels[0].alternatives && \n    deepgramResponse.results.channels[0].alternatives[0]) {\n    \n    const alternative = deepgramResponse.results.channels[0].alternatives[0];\n    transcription = alternative.transcript || '';\n    confidence = alternative.confidence || 0;\n}\n\n// If no transcription found, return appropriate message\nif (!transcription.trim()) {\n    return [{\n        json: {\n            transcription: '',\n            confidence: 0,\n            status: 'no_speech_detected',\n            message: 'No speech detected in audio'\n        }\n    }];\n}\n\nreturn [{\n    json: {\n        transcription: transcription.trim(),\n        confidence: confidence,\n        status: 'success'\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        1392
+      ],
+      "id": "df7e9f76-fac2-4601-a0fe-39882d639ade",
+      "name": "Process Deepgram Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"transcription\": \"{{ $json.transcription || '' }}\",\n  \"confidence\": \"{{ $json.confidence || 0 }}\",\n  \"status\": \"{{ $json.status }}\",\n  \"message\": \"{{ $json.message || 'Transcription completed' }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -704,
+        1392
+      ],
+      "id": "7dec0c86-0a87-445a-82ed-1097a00a78ea",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepgram.com/v1/listen",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "nova-2"
+            },
+            {
+              "name": "smart_format",
+              "value": "true"
+            },
+            {
+              "name": "punctuate",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "audio/webm"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "audio",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1120,
+        1392
+      ],
+      "id": "fcd4df68-4d4b-423e-973c-1a71f8339564",
+      "name": "Deepgram HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cO7YCU6omOSu2IKF",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/interview-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1520,
+        592
+      ],
+      "id": "0751ad1e-e755-4bbf-b19f-978229534679",
+      "name": "Interview Chat",
+      "webhookId": "145d8cac-21cc-4221-bff8-995d8b806fdf"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/upload-resume",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "resume"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2128,
+        128
+      ],
+      "id": "0bd200d2-b8f7-4603-92e1-dc9df45f317c",
+      "name": "Upload Resume",
+      "webhookId": "5fbb3086-065d-41e9-ab5d-b5f339d352c0"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "wegatan582.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+            "content-length": "20935",
+            "accept": "application/json",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "96.242.29.142",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "980d666d3495ae70-EWR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://mathumathi0989.github.io",
+            "priority": "u=1, i",
+            "referer": "https://mathumathi0989.github.io/",
+            "sec-ch-ua": "\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "96.242.29.142, 104.23.187.52",
+            "x-forwarded-host": "wegatan582.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-7-c479b4d45-6cbb8",
+            "x-is-trusted": "yes",
+            "x-real-ip": "96.242.29.142"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "audioData": "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",
+            "sessionId": "tech_interview_1758162340344_0v79hcruj",
+            "candidateEmail": "mathumathi.b@gmail.com"
+          },
+          "webhookUrl": "https://wegatan582.app.n8n.cloud/webhook/speech-to-text",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Interview Chat": [
+      {
+        "json": {
+          "headers": {
+            "host": "wegatan582.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+            "content-length": "152",
+            "accept": "application/json",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "96.242.29.142",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "980d6f48160c1a5c-EWR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://mathumathi0989.github.io",
+            "priority": "u=1, i",
+            "referer": "https://mathumathi0989.github.io/",
+            "sec-ch-ua": "\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "96.242.29.142, 104.23.187.52",
+            "x-forwarded-host": "wegatan582.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-7-c479b4d45-6cbb8",
+            "x-is-trusted": "yes",
+            "x-real-ip": "96.242.29.142"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "I have around eight years of QA experience.",
+            "sessionId": "tech_interview_1758162741527_x2thrcovb",
+            "candidateEmail": "mathumathi.b@gmail.com"
+          },
+          "webhookUrl": "https://wegatan582.app.n8n.cloud/webhook/interview-chat",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Create Job Description Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Session Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare Job Description Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Base64 to Binary": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Job Description Document": {
+      "main": [
+        [
+          {
+            "node": "Convert Base64 to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Job Description Document": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Audio Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Audio Data": {
+      "main": [
+        [
+          {
+            "node": "Deepgram HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Deepgram Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deepgram HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Process Deepgram Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interview Chat": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Resume": {
+      "main": [
+        [
+          {
+            "node": "Extract Session Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bca08f59-cfcc-4e76-a8db-765cbe57fa98",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "851f13502eacd17d32605ac043de919b955ae5873006384629c2e4be602fb375"
+  },
+  "id": "PYhc9qGhiCAs6uLS",
+  "tags": []
+}
