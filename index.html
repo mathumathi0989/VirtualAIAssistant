@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Technical Interview</title>
+    <title>AI-Powered Mock Interview</title>
     <style>
         * {
             margin: 0;
@@ -417,6 +417,7 @@
         .interview-intro h3 {
             color: #0c4a6e;
             margin-bottom: 8px;
+            font-weight: 700;
         }
         
         .interview-intro p {
@@ -500,14 +501,14 @@
             <div class="audio-controls" id="audioToggle" onclick="toggleAudio()" title="Toggle audio responses">
                 🔊
             </div>
-            <h1>AI Technical Interview</h1>
-            <p>Professional mock interview with expert-level technical questions</p>
+            <h1>AI-Powered Mock Interview</h1>
+            <p>Start Practicing & Get Personalized Feedback</p>
             <div class="timer" id="timer"></div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="interview-intro">
-                <h3>📋 Ready for Your Technical Interview?</h3>
+                <h3><strong>Practice today, conquer tomorrow.</strong></h3>
                 <p>Upload your resume and I'll conduct a professional interview with specific questions about your experience, projects, and technical skills.</p>
             </div>
             
@@ -525,7 +526,7 @@
                 </div>
                 
                 <div class="file-input-group">
-                    <label for="jobDescription">📋 Job Description (Optional)</label>
+                    <label for="jobDescription">Job Description (optional — share your target role, responsibilities to tailor the interview)</label>
                     <textarea id="jobDescription" placeholder="Paste the job description or role requirements for more targeted questions..."></textarea>
                 </div>
                 
@@ -651,6 +652,7 @@
             
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
+                timerInterval = null;
                 
                 // Show time up message
                 addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
@@ -668,6 +670,14 @@
                 timerElement.style.display = 'block';
                 updateTimer();
                 timerInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                console.log("⏰ Timer stopped");
             }
         }
 
@@ -958,6 +968,21 @@
                     console.log("📋 Using first array item");
                 }
 
+                // Check if interview is ending
+                const responseMessage = data.response || data.output || data.text || '';
+                if (responseMessage.includes("✅ Thanks for completing") || message.toUpperCase() === "END") {
+                    stopTimer();
+                    
+                    const messageInput = document.getElementById('messageInput');
+                    const sendBtn = document.getElementById('sendBtn');
+                    const micBtn = document.getElementById('micBtn');
+                    if (messageInput) messageInput.disabled = true;
+                    if (sendBtn) sendBtn.disabled = true;
+                    if (micBtn) micBtn.disabled = true;
+                    document.querySelector(".end-instruction").textContent =
+                        "Interview has ended. Check your email for feedback ✅";
+                }
+
                 // Add AI response - check multiple possible response fields
                 if (data.response) {
                     const messageElement = addMessage(data.response, false, true); // Always mark as having audio for Web Speech
@@ -1008,18 +1033,6 @@
                 } else {
                     addMessage("I need a moment to process your response. Could you please elaborate on that?");
                     console.log("⚠️ No response field found in:", JSON.stringify(data).substring(0, 100));
-                }
-
-                // After displaying AI response, check if it's the final message
-                if (data.response && data.response.includes("✅ Thanks for completing")) {
-                    const messageInput = document.getElementById('messageInput');
-                    const sendBtn = document.getElementById('sendBtn');
-                    const micBtn = document.getElementById('micBtn');
-                    if (messageInput) messageInput.disabled = true;
-                    if (sendBtn) sendBtn.disabled = true;
-                    if (micBtn) micBtn.disabled = true;
-                    document.querySelector(".end-instruction").textContent =
-                        "Interview has ended. Check your email for feedback ✅";
                 }
                 
             } catch (error) {
