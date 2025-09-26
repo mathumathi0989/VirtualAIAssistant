@@ -628,11 +628,13 @@
 
     <script>
         const API_BASE = 'https://interviewa.app.n8n.cloud/webhook';
+            const UPLOAD_URL = `${API_BASE}/upload-resume`;
         const WARMUP_URL = `${API_BASE}/warmup-interview`;
      const TECHNICAL_URL = `${API_BASE}/technical-interview`;
 const BEHAVIORAL_URL = `${API_BASE}/behavioral-interview`;
 const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
-const COMPLETE_URL = `${API_BASE}/interview-chat`;
+//const CHAT_URL = `${API_BASE}/interview-chat`;
+        const COMPLETE_URL = `${API_BASE}/complete-interview`;
         
         const SPEECH_TO_TEXT_URL = `${API_BASE}/speech-to-text`;
         
@@ -1057,23 +1059,44 @@ const COMPLETE_URL = `${API_BASE}/interview-chat`;
             showTypingIndicator();
             console.log("📤 Sending message:", message.substring(0, 50) + "...");
             
-            try {
+          try {
+        // Route to correct URL based on interview type
+        let targetUrl;
+        switch (currentInterviewType) {
+            case 'warmup':
+                targetUrl = WARMUP_URL;
+                break;
+            case 'technical':
+                targetUrl = TECHNICAL_URL;
+                break;
+            case 'behavioral':
+                targetUrl = BEHAVIORAL_URL;
+                break;
+            case 'techno-behavioral':
+                targetUrl = TECHNO_BEHAVIORAL_URL;
+                break;
+            case 'complete':
+                targetUrl = COMPLETE_URL;
+                break;
+            default:
+                targetUrl = CHAT_URL; // fallback
+        }
                 const payload = {
                     message: message,
                     sessionId: sessionId,
                     interviewType: currentInterviewType,
                     candidateEmail: candidateEmail
                 };
-                console.log("📧 Including email in request:", candidateEmail);
+            console.log("📧 Sending to:", targetUrl);
        
-                const response = await fetch(CHAT_URL, {
-                    method: 'POST',
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
+             const response = await fetch(targetUrl, {
+            method: 'POST',
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
                 
                 console.log("📥 Chat response status:", response.status);
                 hideTypingIndicator();
