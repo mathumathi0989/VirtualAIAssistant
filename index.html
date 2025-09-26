@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI-Powered Mock Interview</title>
+    <title>AI-Powered Mock Interview Categories</title>
     <style>
         * {
             margin: 0;
@@ -234,30 +234,71 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
         
-        .start-btn {
+        .interview-categories {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .category-btn {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
             border: none;
-            padding: 14px 28px;
+            padding: 16px 20px;
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin-top: 16px;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         
-        .start-btn:hover {
+        .category-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
         }
         
-        .start-btn:disabled {
+        .category-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        
+        .category-btn.warmup {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .category-btn.technical {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .category-btn.behavioral {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+        
+        .category-btn.techno-behavioral {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .category-btn.complete {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            grid-column: 1 / -1;
+        }
+        
+        .category-title {
+            font-size: 15px;
+            font-weight: 700;
+        }
+        
+        .category-desc {
+            font-size: 12px;
+            opacity: 0.9;
         }
         
         .chat-input {
@@ -461,6 +502,14 @@
                 border-radius: 0;
             }
             
+            .interview-categories {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-btn.complete {
+                grid-column: 1;
+            }
+            
             .timer {
                 position: static;
                 margin-top: 8px;
@@ -501,15 +550,15 @@
             <div class="audio-controls" id="audioToggle" onclick="toggleAudio()" title="Toggle audio responses">
                 🔊
             </div>
-            <h1>AI-Powered Mock Interview</h1>
-            <p>Start Practicing & Get Personalized Feedback</p>
+            <h1>AI-Powered Mock Interview Categories</h1>
+            <p>Choose Your Interview Type & Get Personalized Feedback</p>
             <div class="timer" id="timer"></div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="interview-intro">
                 <h3><strong>Practice today, conquer tomorrow.</strong></h3>
-                <p>Upload your resume and I'll conduct a professional interview with specific questions about your experience, projects, and technical skills.</p>
+                <p>Upload your resume and job description, then choose the type of interview practice you need.</p>
             </div>
             
             <div class="upload-section" id="uploadSection">
@@ -526,13 +575,36 @@
                 </div>
                 
                 <div class="file-input-group">
-                    <label for="jobDescription">Job Description (optional — share your target role, responsibilities to tailor the interview)</label>
+                    <label for="jobDescription">💼 Job Description (Optional - for targeted questions)</label>
                     <textarea id="jobDescription" placeholder="Paste the job description or role requirements for more targeted questions..."></textarea>
                 </div>
                 
-                <button class="start-btn" id="startBtn" onclick="startInterview()">
-                    🚀 Begin Interview
-                </button>
+                <div class="interview-categories">
+                    <button class="category-btn warmup" onclick="startInterview('warmup')">
+                        <div class="category-title">🏃‍♂️ Warm-up</div>
+                        <div class="category-desc">Quick MCQ practice questions</div>
+                    </button>
+                    
+                    <button class="category-btn technical" onclick="startInterview('technical')">
+                        <div class="category-title">⚙️ Technical</div>
+                        <div class="category-desc">Hard skills & coding challenges</div>
+                    </button>
+                    
+                    <button class="category-btn behavioral" onclick="startInterview('behavioral')">
+                        <div class="category-title">🤝 Behavioral</div>
+                        <div class="category-desc">Soft skills & situational questions</div>
+                    </button>
+                    
+                    <button class="category-btn techno-behavioral" onclick="startInterview('techno-behavioral')">
+                        <div class="category-title">🔬 Techno-Behavioral</div>
+                        <div class="category-desc">Mixed technical + behavioral scenarios</div>
+                    </button>
+                    
+                    <button class="category-btn complete" onclick="startInterview('complete')">
+                        <div class="category-title">🎯 Complete Interview</div>
+                        <div class="category-desc">Full 360° assessment - all categories combined</div>
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -556,12 +628,17 @@
 
     <script>
         const API_BASE = 'https://interviewa.app.n8n.cloud/webhook';
-        const UPLOAD_URL = `${API_BASE}/upload-resume`;
+        const WARMUP_URL = `${API_BASE}/warmup-interview`;
+        const TECHNICAL_URL = `${API_BASE}/technical-interview`;
+        const BEHAVIORAL_URL = `${API_BASE}/behavioral-interview`;
+        const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
+        const COMPLETE_URL = `${API_BASE}/complete-interview`;
         const CHAT_URL = `${API_BASE}/interview-chat`;
         const SPEECH_TO_TEXT_URL = `${API_BASE}/speech-to-text`;
         
         let interviewStarted = false;
-        let timeRemaining = 900; // 15 minutes for technical interview
+        let currentInterviewType = null;
+        let timeRemaining = 900; // 15 minutes default
         let timerInterval = null;
         let sessionId = null;
         
@@ -577,7 +654,7 @@
         let selectedVoice = null;
         
         // Initialize session ID
-        sessionId = 'tech_interview_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        sessionId = 'interview_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         console.log("🔧 Session ID:", sessionId);
 
         // Set specific voice on page load
@@ -765,11 +842,11 @@
             });
         }
         
-        async function startInterview() {
+        async function startInterview(interviewType) {
             candidateEmail = document.getElementById('candidateEmail').value.trim();
             const resumeFile = document.getElementById('resumeFile').files[0];
             const jobDescription = document.getElementById('jobDescription').value.trim();
-            const startBtn = document.getElementById('startBtn');
+            currentInterviewType = interviewType;
          
             if (!candidateEmail) {
                 showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
@@ -786,9 +863,14 @@
                 return;
             }
 
-            startBtn.disabled = true;
-            startBtn.textContent = '📄 Processing Resume...';
-            console.log("🚀 Starting technical interview process...");
+            // Disable all category buttons
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = '📄 Processing...';
+            });
+            
+            console.log("🚀 Starting", interviewType, "interview process...");
 
             try {
                 // Convert PDF to base64
@@ -796,11 +878,40 @@
                 const base64Data = await fileToBase64(resumeFile);
                 console.log("✅ PDF converted successfully. Size:", Math.round(base64Data.length / 1024), "KB");
                 
-                startBtn.textContent = '🤖 Analyzing with AI...';
+                // Update button text
+                buttons.forEach(btn => btn.textContent = '🤖 Analyzing with AI...');
+                
+                // Get the appropriate URL based on interview type
+                let uploadUrl;
+                switch (interviewType) {
+                    case 'warmup':
+                        uploadUrl = WARMUP_URL;
+                        timeRemaining = 300; // 5 minutes for warmup
+                        break;
+                    case 'technical':
+                        uploadUrl = TECHNICAL_URL;
+                        timeRemaining = 900; // 15 minutes for technical
+                        break;
+                    case 'behavioral':
+                        uploadUrl = BEHAVIORAL_URL;
+                        timeRemaining = 900; // 15 minutes for behavioral
+                        break;
+                    case 'techno-behavioral':
+                        uploadUrl = TECHNO_BEHAVIORAL_URL;
+                        timeRemaining = 1200; // 20 minutes for techno-behavioral
+                        break;
+                    case 'complete':
+                        uploadUrl = COMPLETE_URL;
+                        timeRemaining = 2700; // 45 minutes for complete
+                        break;
+                    default:
+                        uploadUrl = TECHNICAL_URL;
+                }
                 
                 // Send JSON payload to n8n
                 const payload = {
                     sessionId: sessionId,
+                    interviewType: interviewType,
                     resumeData: base64Data,
                     resumeFileName: resumeFile.name,
                     resumeMimeType: resumeFile.type,
@@ -809,10 +920,10 @@
                     candidateEmail: candidateEmail
                 };
                 
-                console.log("📤 Sending payload to AI interviewer...");
+                console.log("📤 Sending payload to", interviewType, "AI interviewer...");
                 showTypingIndicator();
                 
-                const response = await fetch(UPLOAD_URL, {
+                const response = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: { 
                         "Content-Type": "application/json",
@@ -845,7 +956,7 @@
                     throw new Error('Invalid JSON response from AI interviewer');
                 }
 
-                console.log("✅ Interview setup successful");
+                console.log("✅", interviewType, "interview setup successful");
 
                 // Success! Start the interview
                 setupInterviewUI(data);
@@ -857,8 +968,18 @@
                 
                 addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please try again.`, false);
                 
-                startBtn.disabled = false;
-                startBtn.textContent = '🚀 Begin Interview';
+                // Re-enable buttons
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    const originalText = {
+                        'warmup': '🏃‍♂️ Warm-up',
+                        'technical': '⚙️ Technical', 
+                        'behavioral': '🤝 Behavioral',
+                        'techno-behavioral': '🔬 Techno-Behavioral',
+                        'complete': '🎯 Complete Interview'
+                    };
+                    btn.innerHTML = `<div class="category-title">${originalText[btn.onclick.toString().match(/'(\w+)'/)[1]]}</div>`;
+                });
             }
         }
         
@@ -867,11 +988,19 @@
             document.getElementById('uploadSection').style.display = 'none';
             document.getElementById('chatInput').style.display = 'block';
 
-            // Add welcome message
-            addMessage("👨‍💼 <strong>Interview Started</strong><br>");
+            // Add welcome message based on interview type
+            const typeMessages = {
+                'warmup': "🏃‍♂️ <strong>Warm-up Interview Started</strong><br>Quick multiple choice questions to get you warmed up!",
+                'technical': "⚙️ <strong>Technical Interview Started</strong><br>Let's test your hard skills and technical knowledge!",
+                'behavioral': "🤝 <strong>Behavioral Interview Started</strong><br>Time to showcase your soft skills and experiences!",
+                'techno-behavioral': "🔬 <strong>Techno-Behavioral Interview Started</strong><br>Mixed scenarios combining technical and behavioral elements!",
+                'complete': "🎯 <strong>Complete Interview Started</strong><br>Full 360° assessment covering all aspects!"
+            };
+            
+            addMessage(typeMessages[currentInterviewType] || "👨‍💼 <strong>Interview Started</strong><br>");
             
             // Add first question from AI (if provided, otherwise it will come from the first chat response)
-                            if (data.question) {
+            if (data.question) {
                 setTimeout(() => {
                     const messageElement = addMessage(data.question, false, true);
                     
@@ -890,8 +1019,11 @@
             
             console.log("✅ Interview started successfully");
 
-            // Start timer
-            startTimer();
+            // Start timer only for non-warmup interviews
+            if (currentInterviewType !== 'warmup') {
+                startTimer();
+            }
+            
             interviewStarted = true;
             
             // Focus on input after a brief delay
@@ -929,6 +1061,7 @@
                 const payload = {
                     message: message,
                     sessionId: sessionId,
+                    interviewType: currentInterviewType,
                     candidateEmail: candidateEmail
                 };
                 console.log("📧 Including email in request:", candidateEmail);
@@ -985,15 +1118,15 @@
 
                 // Add AI response - check multiple possible response fields
                 if (data.response) {
-                    const messageElement = addMessage(data.response, false, true); // Always mark as having audio for Web Speech
+                    const messageElement = addMessage(data.response, false, true);
                     
                     // Convert HTML to plain text for speech
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = data.response;
                     const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
                     
-                    // Play speech after a small delay
-                    if (textToSpeak.trim()) {
+                    // Play speech after a small delay (only for non-warmup interviews)
+                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
                         setTimeout(() => {
                             playAudioResponse(textToSpeak, messageElement);
                         }, 500);
@@ -1005,7 +1138,7 @@
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = data.output;
                     const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    if (textToSpeak.trim()) {
+                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
                         setTimeout(() => {
                             playAudioResponse(textToSpeak, messageElement);
                         }, 500);
@@ -1016,7 +1149,7 @@
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = data.text;
                     const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    if (textToSpeak.trim()) {
+                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
                         setTimeout(() => {
                             playAudioResponse(textToSpeak, messageElement);
                         }, 500);
@@ -1024,7 +1157,7 @@
                     console.log("✅ Added AI text");
                 } else if (typeof data === 'string') {
                     const messageElement = addMessage(data, false, true);
-                    if (data.trim()) {
+                    if (data.trim() && currentInterviewType !== 'warmup') {
                         setTimeout(() => {
                             playAudioResponse(data, messageElement);
                         }, 500);
@@ -1048,9 +1181,9 @@
             }
         }
 
-        // Speech-to-Text Functions
+        // Speech-to-Text Functions (only for non-warmup interviews)
         async function toggleRecording() {
-            if (!interviewStarted) return;
+            if (!interviewStarted || currentInterviewType === 'warmup') return;
             
             if (!isRecording) {
                 await startRecording();
@@ -1281,7 +1414,7 @@
         
         // Keyboard shortcut for microphone (Space bar when input is not focused)
         document.addEventListener('keydown', function(e) {
-            if (e.code === 'Space' && !e.target.matches('input, textarea') && interviewStarted) {
+            if (e.code === 'Space' && !e.target.matches('input, textarea') && interviewStarted && currentInterviewType !== 'warmup') {
                 e.preventDefault();
                 if (!isRecording) {
                     toggleRecording();
@@ -1301,11 +1434,13 @@
             initializeVoice();
         });
         
-        console.log("🔧 Frontend initialized with fixed Google US English voice. API Base:", API_BASE);
-        console.log("💡 Tips:");
-        console.log("   - Click speaker icon to toggle audio responses");
-        console.log("   - AI will speak using Google US English voice");
-        console.log("   - Hold spacebar to record (when not typing)");
+        console.log("🔧 Frontend initialized with 5 interview categories. API Base:", API_BASE);
+        console.log("💡 Interview Types:");
+        console.log("   🏃‍♂️ Warm-up: Quick MCQ questions (email delivery only)");
+        console.log("   ⚙️ Technical: Hard skills & coding (15 min)");
+        console.log("   🤝 Behavioral: Soft skills & situations (15 min)");
+        console.log("   🔬 Techno-Behavioral: Mixed scenarios (20 min)");
+        console.log("   🎯 Complete: Full 360° assessment (45 min)");
     </script>
 </body>
 </html>
