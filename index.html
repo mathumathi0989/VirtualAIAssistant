@@ -844,146 +844,180 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             });
         }
         
-        async function startInterview(interviewType) {
-            candidateEmail = document.getElementById('candidateEmail').value.trim();
-            const resumeFile = document.getElementById('resumeFile').files[0];
-            const jobDescription = document.getElementById('jobDescription').value.trim();
-            currentInterviewType = interviewType;
-         
-            if (!candidateEmail) {
-                showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
-                return;
-            }
-            
-            if (!resumeFile) {
-                showFileStatus('resumeStatus', '❌ Please select a PDF resume file', 'error');
-                return;
-            }
+     async function startInterview(interviewType) {
+    candidateEmail = document.getElementById('candidateEmail').value.trim();
+    const resumeFile = document.getElementById('resumeFile').files[0];
+    const jobDescription = document.getElementById('jobDescription').value.trim();
+    currentInterviewType = interviewType;
+ 
+    if (!candidateEmail) {
+        showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
+        return;
+    }
+    
+    if (!resumeFile) {
+        showFileStatus('resumeStatus', '❌ Please select a PDF resume file', 'error');
+        return;
+    }
 
-            if (resumeFile.type !== 'application/pdf') {
-                showFileStatus('resumeStatus', '❌ Please upload a PDF file only', 'error');
-                return;
-            }
+    if (resumeFile.type !== 'application/pdf') {
+        showFileStatus('resumeStatus', '❌ Please upload a PDF file only', 'error');
+        return;
+    }
 
-            // Disable all category buttons
-            const buttons = document.querySelectorAll('.category-btn');
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.textContent = '📄 Processing...';
-            });
-            
-            console.log("🚀 Starting", interviewType, "interview process...");
+    // Disable all category buttons
+    const buttons = document.querySelectorAll('.category-btn');
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.textContent = '📄 Processing...';
+    });
+    
+    console.log("🚀 Starting", interviewType, "interview process...");
 
-            try {
-                // Convert PDF to base64
-                console.log("📄 Converting PDF to base64...");
-                const base64Data = await fileToBase64(resumeFile);
-                console.log("✅ PDF converted successfully. Size:", Math.round(base64Data.length / 1024), "KB");
-                
-                // Update button text
-                buttons.forEach(btn => btn.textContent = '🤖 Analyzing with AI...');
-                
-                // Get the appropriate URL based on interview type
-                let uploadUrl;
-                switch (interviewType) {
-                    case 'warmup':
-                        uploadUrl = WARMUP_URL;
-                        timeRemaining = 300; // 5 minutes for warmup
-                        break;
-                    case 'technical':
-                        uploadUrl = TECHNICAL_URL;
-                        timeRemaining = 900; // 15 minutes for technical
-                        break;
-                    case 'behavioral':
-                        uploadUrl = BEHAVIORAL_URL;
-                        timeRemaining = 900; // 15 minutes for behavioral
-                        break;
-                    case 'techno-behavioral':
-                        uploadUrl = TECHNO_BEHAVIORAL_URL;
-                        timeRemaining = 1200; // 20 minutes for techno-behavioral
-                        break;
-                    case 'complete':
-                        uploadUrl = COMPLETE_URL;
-                        timeRemaining = 2700; // 45 minutes for complete
-                        break;
-                    default:
-                        uploadUrl = TECHNICAL_URL;
-                }
-                
-                // Send JSON payload to n8n
-                const payload = {
-                    sessionId: sessionId,
-                    interviewType: interviewType,
-                    resumeData: base64Data,
-                    resumeFileName: resumeFile.name,
-                    resumeMimeType: resumeFile.type,
-                    resumeFileSize: resumeFile.size,
-                    jobDescription: jobDescription || "",
-                    candidateEmail: candidateEmail
-                };
-                
-                console.log("📤 Sending payload to", interviewType, "AI interviewer...");
-                showTypingIndicator();
-                
-                const response = await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
+    try {
+        // Step 1: Upload and process documents
+        console.log("📄 Converting PDF to base64...");
+        const base64Data = await fileToBase64(resumeFile);
+        console.log("✅ PDF converted successfully. Size:", Math.round(base64Data.length / 1024), "KB");
+        
+        buttons.forEach(btn => btn.textContent = '📄 Uploading documents...');
+        
+        // Upload documents first
+        const uploadPayload = {
+            sessionId: sessionId,
+            resumeData: base64Data,
+            resumeFileName: resumeFile.name,
+            resumeMimeType: resumeFile.type,
+            resumeFileSize: resumeFile.size,
+            jobDescription: jobDescription || "",
+            candidateEmail: candidateEmail
+        };
+        
+        console.log("📤 Uploading documents to process...");
+        showTypingIndicator();
+        
+        const uploadResponse = await fetch(UPLOAD_URL, {
+            method: 'POST',
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(uploadPayload)
+        });
 
-                console.log("📥 Response status:", response.status);
-                hideTypingIndicator();
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.log("❌ Upload failed:", errorText);
-                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-                }
-                
-                const responseText = await response.text();
-                console.log("📋 Raw response:", responseText.substring(0, 200) + "...");
-                
-                if (!responseText || responseText.trim() === '') {
-                    throw new Error('Empty response from AI interviewer');
-                }
-                
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.log("❌ JSON parse error:", parseError.message);
-                    throw new Error('Invalid JSON response from AI interviewer');
-                }
-
-                console.log("✅", interviewType, "interview setup successful");
-
-                // Success! Start the interview
-                setupInterviewUI(data);
-
-            } catch (error) {
-                hideTypingIndicator();
-                console.log("❌ Error:", error.message);
-                console.error('Error starting interview:', error);
-                
-                addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please try again.`, false);
-                
-                // Re-enable buttons
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    const originalText = {
-                        'warmup': '🏃‍♂️ Warm-up',
-                        'technical': '⚙️ Technical', 
-                        'behavioral': '🤝 Behavioral',
-                        'techno-behavioral': '🔬 Techno-Behavioral',
-                        'complete': '🎯 Complete Interview'
-                    };
-                    btn.innerHTML = `<div class="category-title">${originalText[btn.onclick.toString().match(/'(\w+)'/)[1]]}</div>`;
-                });
-            }
+        if (!uploadResponse.ok) {
+            throw new Error(`Document upload failed: ${uploadResponse.status}`);
         }
+        
+        console.log("✅ Documents processed successfully");
+        hideTypingIndicator();
+        
+        // Step 2: Start specific interview type
+        buttons.forEach(btn => btn.textContent = '🤖 Starting interview...');
+        
+        // Set time limits
+        switch (interviewType) {
+            case 'warmup':
+                timeRemaining = 300; // 5 minutes for warmup
+                break;
+            case 'technical':
+                timeRemaining = 900; // 15 minutes for technical
+                break;
+            case 'behavioral':
+                timeRemaining = 900; // 15 minutes for behavioral
+                break;
+            case 'techno-behavioral':
+                timeRemaining = 1200; // 20 minutes for techno-behavioral
+                break;
+            case 'complete':
+                timeRemaining = 2700; // 45 minutes for complete
+                break;
+        }
+        
+        // Get interview URL
+        const interviewUrls = {
+            'warmup': WARMUP_URL,
+            'technical': TECHNICAL_URL,
+            'behavioral': BEHAVIORAL_URL,
+            'techno-behavioral': TECHNO_BEHAVIORAL_URL,
+            'complete': COMPLETE_URL
+        };
+        
+        // Start interview payload
+        const interviewPayload = {
+            message: "Start interview",
+            sessionId: sessionId,
+            interviewType: interviewType,
+            candidateEmail: candidateEmail
+        };
+        
+        console.log("📤 Starting", interviewType, "interview...");
+        showTypingIndicator();
+        
+        const interviewResponse = await fetch(interviewUrls[interviewType], {
+            method: 'POST',
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(interviewPayload)
+        });
+
+        console.log("📥 Interview response status:", interviewResponse.status);
+        hideTypingIndicator();
+
+        if (!interviewResponse.ok) {
+            const errorText = await interviewResponse.text();
+            console.log("❌ Interview start failed:", errorText);
+            throw new Error(`Interview failed: ${interviewResponse.status} - ${errorText}`);
+        }
+        
+        const responseText = await interviewResponse.text();
+        console.log("📋 Raw response:", responseText.substring(0, 200) + "...");
+        
+        if (!responseText || responseText.trim() === '') {
+            throw new Error('Empty response from AI interviewer');
+        }
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.log("❌ JSON parse error:", parseError.message);
+            throw new Error('Invalid JSON response from AI interviewer');
+        }
+
+        // Handle array response
+        if (Array.isArray(data) && data.length > 0) {
+            data = data[0];
+        }
+
+        console.log("✅", interviewType, "interview started successfully");
+
+        // Success! Setup interview UI
+        setupInterviewUI(data);
+
+    } catch (error) {
+        hideTypingIndicator();
+        console.log("❌ Error:", error.message);
+        console.error('Error starting interview:', error);
+        
+        addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please try again.`, false);
+        
+        // Re-enable buttons
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            const originalText = {
+                'warmup': '🏃‍♂️ Warm-up',
+                'technical': '⚙️ Technical', 
+                'behavioral': '🤝 Behavioral',
+                'techno-behavioral': '🔬 Techno-Behavioral',
+                'complete': '🎯 Complete Interview'
+            };
+            btn.innerHTML = `<div class="category-title">${originalText[interviewType]}</div>`;
+        });
+    }
+}
         
         function setupInterviewUI(data) {
             // Hide upload section and show chat input
