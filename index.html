@@ -918,7 +918,7 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
         // Set time limits
         switch (interviewType) {
             case 'warmup':
-                timeRemaining = 300; // 5 minutes for warmup
+                timeRemaining = 900; // 15 minutes for warmup
                 break;
             case 'technical':
                 timeRemaining = 900; // 15 minutes for technical
@@ -927,10 +927,10 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                 timeRemaining = 900; // 15 minutes for behavioral
                 break;
             case 'techno-behavioral':
-                timeRemaining = 1200; // 20 minutes for techno-behavioral
+                timeRemaining = 900; // 15 minutes for techno-behavioral
                 break;
             case 'complete':
-                timeRemaining = 2700; // 45 minutes for complete
+                timeRemaining = 900; // 15 minutes for complete
                 break;
         }
         
