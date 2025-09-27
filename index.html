@@ -1034,27 +1034,32 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             };
             
             addMessage(typeMessages[currentInterviewType] || "👨‍💼 <strong>Interview Started</strong><br>");
-            
-            // Add first question from AI (if provided, otherwise it will come from the first chat response)
-            if (data.question) {
-                setTimeout(() => {
-                    const messageElement = addMessage(data.question, false, true);
-                    
-                    // Convert HTML to plain text and speak it
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = data.question;
-                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    
-                    if (textToSpeak.trim()) {
-                        setTimeout(() => {
-                            playAudioResponse(textToSpeak, messageElement);
-                        }, 800);
-                    }
-                }, 1500);
-            }
-            
-            console.log("✅ Interview started successfully");
 
+             // Handle array response
+    if (Array.isArray(data) && data.length > 0) {
+        data = data[0];
+    }
+
+          // Add the AI's first question immediately
+    const aiResponse = data.response || data.output || data.text || '';
+    if (aiResponse && aiResponse.trim()) {
+        setTimeout(() => {
+            const messageElement = addMessage(aiResponse, false, true);
+            
+            // Convert HTML to plain text and speak it
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = aiResponse;
+            const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+            
+            if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
+                setTimeout(() => {
+                    playAudioResponse(textToSpeak, messageElement);
+                }, 800);
+            }
+        }, 1500);
+    }
+            
+    
             // Start timer only for non-warmup interviews
             if (currentInterviewType !== 'warmup') {
                 startTimer();
