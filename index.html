@@ -1109,7 +1109,7 @@ if (intro) intro.remove();
 }
         
         function setupInterviewUI(data) {
-       document.getElementById('categorySelection').style.display = 'none';
+   document.getElementById('categorySelection').style.display = 'none';
     const intro = document.querySelector('.interview-intro');
     if (intro) intro.remove();
     document.getElementById('chatInput').style.display = 'block';
@@ -1132,11 +1132,20 @@ if (intro) intro.remove();
     const aiResponse = data.response || data.output || data.text || '';
     if (aiResponse && aiResponse.trim()) {
         setTimeout(() => {
-            const messageElement = addMessage(aiResponse, false, false);
-
             if (currentInterviewType === 'warmup') {
+                // For warmup, extract just the question text WITHOUT options
+                const lines = aiResponse.split('\n');
+                const questionLines = [];
+                for (let line of lines) {
+                    if (/^[A-D][.)\]]\s/.test(line.trim())) break;
+                    questionLines.push(line);
+                }
+                const questionText = questionLines.join('\n').trim();
+                
+                addMessage(questionText, false, false);
                 renderMCQOptions(aiResponse);
             } else {
+                const messageElement = addMessage(aiResponse, false, false);
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = aiResponse;
                 const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
@@ -1162,7 +1171,6 @@ if (intro) intro.remove();
             messageInput.focus();
         }
     }, 2000);
-            
             
         }
 
@@ -1315,41 +1323,78 @@ if (intro) intro.remove();
                     document.getElementById('backBtn').style.display = 'block';
                 }
 
-                if (data.response) {
-                    const messageElement = addMessage(data.response, false, currentInterviewType !== 'warmup');
-                     if (currentInterviewType === 'warmup') {
+              if (data.response) {
+    if (currentInterviewType === 'warmup') {
+        // Extract question without options
+        const lines = data.response.split('\n');
+        const questionLines = [];
+        for (let line of lines) {
+            if (/^[A-D][.)\]]\s/.test(line.trim())) break;
+            questionLines.push(line);
+        }
+        const questionText = questionLines.join('\n').trim();
+        
+        addMessage(questionText, false, false);
         renderMCQOptions(data.response);
+    } else {
+        const messageElement = addMessage(data.response, false, true);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = data.response;
+        const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+        
+        if (textToSpeak.trim()) {
+            setTimeout(() => {
+                playAudioResponse(textToSpeak, messageElement);
+            }, 500);
+        }
     }
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = data.response;
-                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    
-                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
-                        setTimeout(() => {
-                            playAudioResponse(textToSpeak, messageElement);
-                        }, 500);
-                    }
-                } else if (data.output) {
-                    const messageElement = addMessage(data.output, false, true);
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = data.output;
-                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
-                        setTimeout(() => {
-                            playAudioResponse(textToSpeak, messageElement);
-                        }, 500);
-                    }
-                } else if (data.text) {
-                    const messageElement = addMessage(data.text, false, true);
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = data.text;
-                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
-                        setTimeout(() => {
-                            playAudioResponse(textToSpeak, messageElement);
-                        }, 500);
-                    }
-                } else if (typeof data === 'string') {
+}else if (data.output) {
+    if (currentInterviewType === 'warmup') {
+        const lines = data.output.split('\n');
+        const questionLines = [];
+        for (let line of lines) {
+            if (/^[A-D][.)\]]\s/.test(line.trim())) break;
+            questionLines.push(line);
+        }
+        const questionText = questionLines.join('\n').trim();
+        
+        addMessage(questionText, false, false);
+        renderMCQOptions(data.output);
+    } else {
+        const messageElement = addMessage(data.output, false, true);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = data.output;
+        const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+        if (textToSpeak.trim()) {
+            setTimeout(() => {
+                playAudioResponse(textToSpeak, messageElement);
+            }, 500);
+        }
+    }
+} else if (data.text) {
+    if (currentInterviewType === 'warmup') {
+        const lines = data.text.split('\n');
+        const questionLines = [];
+        for (let line of lines) {
+            if (/^[A-D][.)\]]\s/.test(line.trim())) break;
+            questionLines.push(line);
+        }
+        const questionText = questionLines.join('\n').trim();
+        
+        addMessage(questionText, false, false);
+        renderMCQOptions(data.text);
+    } else {
+        const messageElement = addMessage(data.text, false, true);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = data.text;
+        const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+        if (textToSpeak.trim()) {
+            setTimeout(() => {
+                playAudioResponse(textToSpeak, messageElement);
+            }, 500);
+        }
+    }
+}else if (typeof data === 'string') {
                     const messageElement = addMessage(data, false, true);
                     if (data.trim() && currentInterviewType !== 'warmup') {
                         setTimeout(() => {
