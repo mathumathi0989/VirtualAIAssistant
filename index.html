@@ -1322,137 +1322,138 @@ if (intro) intro.remove();
         }
         
         async function startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        sampleRate: 16000,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true
-                    }
-                });
-                
-                mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'audio/webm;codecs=opus'
-                });
-                audioChunks = [];
-                
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                    }
-                };
-                
-                mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    await sendAudioToServer(audioBlob);
-                    
-                    stream.getTracks().forEach(track => track.stop());
-                    
-                    const recordingStatus = document.getElementById('recordingStatus');
-                    recordingStatus.classList.remove('active');
-                };
-                
-                mediaRecorder.start(250);
-                isRecording = true;
-                
-                const micBtn = document.getElementById('micBtn');
-                const recordingStatus = document.getElementById('recordingStatus');
-                
-                micBtn.textContent = '⏹️';
-                micBtn.classList.add('recording');
-                micBtn.title = 'Click to stop recording';
-                recordingStatus.classList.add('active');
-                
-            } catch (error) {
-                console.error('Error accessing microphone:', error);
-                addMessage('❌ Could not access microphone. Please check permissions and try again.', false);
-            }
+        try {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            addMessage('❌ Speech recognition not supported in this browser. Please use Chrome.', false);
+            return;
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = transcript;
+            messageInput.focus();
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            addMessage('❌ Could not understand speech. Please try again.', false);
+        };
+        
+        recognition.onend = () => {
+            isRecording = false;
+            const micBtn = document.getElementById('micBtn');
+            micBtn.textContent = '🎤';
+            micBtn.classList.remove('recording');
+            const recordingStatus = document.getElementById('recordingStatus');
+            recordingStatus.classList.remove('active');
+        };
+        
+        recognition.start();
+        isRecording = true;
+        
+        const micBtn = document.getElementById('micBtn');
+        const recordingStatus = document.getElementById('recordingStatus');
+        micBtn.textContent = '⏹️';
+        micBtn.classList.add('recording');
+        recordingStatus.classList.add('active');
+        
+    } catch (error) {
+        console.error('Error with speech recognition:', error);
+        addMessage('❌ Could not access speech recognition.', false);
+    }
         }
         
         async function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
+            // if (mediaRecorder && isRecording) {
+            //     mediaRecorder.stop();
+            //     isRecording = false;
                 
-                const micBtn = document.getElementById('micBtn');
-                micBtn.textContent = '🎤';
-                micBtn.classList.remove('recording');
-                micBtn.disabled = true;
-                micBtn.title = 'Processing speech...';
-            }
+            //     const micBtn = document.getElementById('micBtn');
+            //     micBtn.textContent = '🎤';
+            //     micBtn.classList.remove('recording');
+            //     micBtn.disabled = true;
+            //     micBtn.title = 'Processing speech...';
+            // }
         }
         
-        async function sendAudioToServer(audioBlob) {
-            try {
-                showTypingIndicator();
+        // async function sendAudioToServer(audioBlob) {
+        //     try {
+        //         showTypingIndicator();
                 
-                const base64Audio = await blobToBase64(audioBlob);
+        //         const base64Audio = await blobToBase64(audioBlob);
                 
-                const payload = {
-                    audioData: base64Audio,
-                    sessionId: sessionId,
-                    candidateEmail: candidateEmail
-                };
+        //         const payload = {
+        //             audioData: base64Audio,
+        //             sessionId: sessionId,
+        //             candidateEmail: candidateEmail
+        //         };
                 
-                const response = await fetch(SPEECH_TO_TEXT_URL, {
-                    method: 'POST',
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
+        //         const response = await fetch(SPEECH_TO_TEXT_URL, {
+        //             method: 'POST',
+        //             headers: { 
+        //                 "Content-Type": "application/json",
+        //                 "Accept": "application/json"
+        //             },
+        //             body: JSON.stringify(payload)
+        //         });
                 
-                hideTypingIndicator();
+        //         hideTypingIndicator();
                 
-                if (!response.ok) {
-                    throw new Error(`Speech-to-text failed: ${response.status}`);
-                }
+        //         if (!response.ok) {
+        //             throw new Error(`Speech-to-text failed: ${response.status}`);
+        //         }
                 
-                const result = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(result);
-                } catch (e) {
-                    throw new Error('Invalid response from speech service');
-                }
+        //         const result = await response.text();
+        //         let data;
+        //         try {
+        //             data = JSON.parse(result);
+        //         } catch (e) {
+        //             throw new Error('Invalid response from speech service');
+        //         }
                 
-                if (Array.isArray(data) && data.length > 0) {
-                    data = data[0];
-                }
+        //         if (Array.isArray(data) && data.length > 0) {
+        //             data = data[0];
+        //         }
                 
-                const transcribedText = data.transcription || data.text || '';
+        //         const transcribedText = data.transcription || data.text || '';
                 
-                if (transcribedText.trim()) {
-                    const messageInput = document.getElementById('messageInput');
-                    messageInput.value = transcribedText;
-                    messageInput.focus();
-                } else {
-                    addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
-                }
+        //         if (transcribedText.trim()) {
+        //             const messageInput = document.getElementById('messageInput');
+        //             messageInput.value = transcribedText;
+        //             messageInput.focus();
+        //         } else {
+        //             addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
+        //         }
                 
-            } catch (error) {
-                hideTypingIndicator();
-                console.error('Error processing audio:', error);
-                addMessage('❌ Error processing speech. Please try typing your answer instead.', false);
-            } finally {
-                const micBtn = document.getElementById('micBtn');
-                micBtn.disabled = false;
-                micBtn.title = 'Click to record your answer';
-            }
-        }
+        //     } catch (error) {
+        //         hideTypingIndicator();
+        //         console.error('Error processing audio:', error);
+        //         addMessage('❌ Error processing speech. Please try typing your answer instead.', false);
+        //     } finally {
+        //         const micBtn = document.getElementById('micBtn');
+        //         micBtn.disabled = false;
+        //         micBtn.title = 'Click to record your answer';
+        //     }
+        // }
         
-        function blobToBase64(blob) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.readAsDataURL(blob);
-            });
-        }
+        // function blobToBase64(blob) {
+        //     return new Promise((resolve) => {
+        //         const reader = new FileReader();
+        //         reader.onloadend = () => {
+        //             const base64 = reader.result.split(',')[1];
+        //             resolve(base64);
+        //         };
+        //         reader.readAsDataURL(blob);
+        //     });
+        // }
         
         function showFileStatus(elementId, message, type) {
             const statusEl = document.getElementById(elementId);
