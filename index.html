@@ -1059,14 +1059,10 @@ if (intro) intro.remove();
     optionButtons.className = 'mcq-options';
     optionButtons.style.cssText = 'display: flex; flex-direction: column; gap: 10px; margin: 16px 0;';
     
-    let foundFirstOption = false;
-    
     lines.forEach(line => {
         const trimmed = line.trim();
-        // Only match lines that start with the pattern at the beginning
-        if (/^[A-D][.)]\s+`/.test(trimmed) || (/^[A-D][.)]\s+\w/.test(trimmed) && foundFirstOption === false)) {
-            if (!foundFirstOption) foundFirstOption = true;
-            
+        // Match lines that start with A. B. C. D. or A) B) C) D)
+        if (/^[A-D][.)\]]\s/.test(trimmed)) {
             const btn = document.createElement('button');
             btn.className = 'mcq-option-btn';
             btn.textContent = trimmed;
@@ -1105,7 +1101,7 @@ if (intro) intro.remove();
         }
     });
     
-    if (optionButtons.children.length > 0 && optionButtons.children.length === 4) {
+    if (optionButtons.children.length > 0) {
         const messagesDiv = document.getElementById('chatMessages');
         messagesDiv.appendChild(optionButtons);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
