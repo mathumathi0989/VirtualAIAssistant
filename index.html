@@ -94,6 +94,27 @@
             opacity: 0.5;
         }
 
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            color: white;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateX(-2px);
+        }
         
         .chat-messages {
             flex: 1;
@@ -184,6 +205,7 @@
         .upload-header p {
             color: #6b7280;
             font-size: 0.9rem;
+            line-height: 1.5;
         }
         
         .file-input-group {
@@ -232,6 +254,36 @@
             outline: none;
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .select-interview-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .select-interview-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .select-interview-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .category-selection {
+            display: none;
         }
         
         .interview-categories {
@@ -464,6 +516,7 @@
         .interview-intro p {
             color: #0369a1;
             font-size: 0.85rem;
+            line-height: 1.5;
         }
 
         .recording-status {
@@ -516,7 +569,7 @@
                 display: inline-block;
             }
 
-            .audio-controls {
+            .audio-controls, .back-btn {
                 position: static;
                 margin-top: 8px;
                 display: inline-block;
@@ -547,6 +600,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
+            <button class="back-btn" id="backBtn" onclick="goBackToCategories()">← Back</button>
             <div class="audio-controls" id="audioToggle" onclick="toggleAudio()" title="Toggle audio responses">
                 🔊
             </div>
@@ -558,7 +612,7 @@
         <div class="chat-messages" id="chatMessages">
             <div class="interview-intro">
                 <h3><strong>Practice today, conquer tomorrow.</strong></h3>
-                <p>Upload your resume and job description, then choose the type of interview practice you need.</p>
+                <p>Upload your resume and job description, then choose the type of interview practice you need.<br>You can end any interview by typing "END" or when the timer ends.</p>
             </div>
             
             <div class="upload-section" id="uploadSection">
@@ -579,31 +633,42 @@
                     <textarea id="jobDescription" placeholder="Paste the job description or role requirements for more targeted questions..."></textarea>
                 </div>
                 
-                <div class="interview-categories">
-                    <button class="category-btn warmup" onclick="startInterview('warmup')">
-                        <div class="category-title">🏃‍♂️ Warm-up</div>
-                        <div class="category-desc">Quick MCQ practice questions</div>
-                    </button>
+                <button class="select-interview-btn" onclick="proceedToCategories()">Select Interview Type</button>
+            </div>
+
+            <div class="category-selection" id="categorySelection">
+                <div class="upload-section">
+                    <div class="upload-header">
+                        <h2>Select Interview Type</h2>
+                        <p>Choose the category you'd like to practice</p>
+                    </div>
                     
-                    <button class="category-btn technical" onclick="startInterview('technical')">
-                        <div class="category-title">⚙️ Technical</div>
-                        <div class="category-desc">Hard skills & coding challenges</div>
-                    </button>
-                    
-                    <button class="category-btn behavioral" onclick="startInterview('behavioral')">
-                        <div class="category-title">🤝 Behavioral</div>
-                        <div class="category-desc">Soft skills & situational questions</div>
-                    </button>
-                    
-                    <button class="category-btn techno-behavioral" onclick="startInterview('techno-behavioral')">
-                        <div class="category-title">🔬 Techno-Behavioral</div>
-                        <div class="category-desc">Mixed technical + behavioral scenarios</div>
-                    </button>
-                    
-                    <button class="category-btn complete" onclick="startInterview('complete')">
-                        <div class="category-title">🎯 Complete Interview</div>
-                        <div class="category-desc">Full 360° assessment - all categories combined</div>
-                    </button>
+                    <div class="interview-categories">
+                        <button class="category-btn warmup" onclick="startInterview('warmup')">
+                            <div class="category-title">🏃‍♂️ Warm-up</div>
+                            <div class="category-desc">Quick MCQ practice questions</div>
+                        </button>
+                        
+                        <button class="category-btn technical" onclick="startInterview('technical')">
+                            <div class="category-title">⚙️ Technical</div>
+                            <div class="category-desc">Hard skills & coding challenges</div>
+                        </button>
+                        
+                        <button class="category-btn behavioral" onclick="startInterview('behavioral')">
+                            <div class="category-title">🤝 Behavioral</div>
+                            <div class="category-desc">Soft skills & situational questions</div>
+                        </button>
+                        
+                        <button class="category-btn techno-behavioral" onclick="startInterview('techno-behavioral')">
+                            <div class="category-title">🔬 Techno-Behavioral</div>
+                            <div class="category-desc">Mixed technical + behavioral scenarios</div>
+                        </button>
+                        
+                        <button class="category-btn complete" onclick="startInterview('complete')">
+                            <div class="category-title">🎯 Complete Interview</div>
+                            <div class="category-desc">Full 360° assessment - all categories combined</div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -628,56 +693,43 @@
 
     <script>
         const API_BASE = 'https://interviewa.app.n8n.cloud/webhook';
-            const UPLOAD_URL = `${API_BASE}/upload-resume`;
+        const UPLOAD_URL = `${API_BASE}/upload-resume`;
         const WARMUP_URL = `${API_BASE}/warmup-interview`;
-     const TECHNICAL_URL = `${API_BASE}/technical-interview`;
-const BEHAVIORAL_URL = `${API_BASE}/behavioral-interview`;
-const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
-//const CHAT_URL = `${API_BASE}/interview-chat`;
+        const TECHNICAL_URL = `${API_BASE}/technical-interview`;
+        const BEHAVIORAL_URL = `${API_BASE}/behavioral-interview`;
+        const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
         const COMPLETE_URL = `${API_BASE}/complete-interview`;
-        
         const SPEECH_TO_TEXT_URL = `${API_BASE}/speech-to-text`;
         
         let interviewStarted = false;
         let currentInterviewType = null;
-        let timeRemaining = 900; // 15 minutes default
+        let timeRemaining = 900;
         let timerInterval = null;
         let sessionId = null;
+        let documentsUploaded = false;
         
-        // Speech recognition variables
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
         let candidateEmail = "";
         
-        // Audio response variables
         let audioEnabled = true;
         let currentAudio = null;
         let selectedVoice = null;
         
-        // Initialize session ID
         sessionId = 'interview_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        console.log("🔧 Session ID:", sessionId);
 
-        // Set specific voice on page load
         function initializeVoice() {
             const voices = window.speechSynthesis.getVoices();
-            
-            // Look for "Google US English" specifically
-            selectedVoice = voices.find(voice => 
-                voice.name === 'Google US English'
-            ) || voices.find(voice => 
-                voice.name.includes('Google') && voice.lang.startsWith('en')
-            ) || voices.find(voice => 
-                voice.lang === 'en-US'
-            ) || voices[0];
-            
+            selectedVoice = voices.find(voice => voice.name === 'Google US English') || 
+                           voices.find(voice => voice.name.includes('Google') && voice.lang.startsWith('en')) || 
+                           voices.find(voice => voice.lang === 'en-US') || 
+                           voices[0];
             if (selectedVoice) {
                 console.log("🎤 Using voice:", selectedVoice.name, "(" + selectedVoice.lang + ")");
             }
         }
 
-        // Initialize voice when voices are loaded
         if (window.speechSynthesis.getVoices().length === 0) {
             window.speechSynthesis.addEventListener('voiceschanged', initializeVoice);
         } else {
@@ -732,12 +784,8 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
                 timerInterval = null;
-                
-                // Show time up message
                 addMessage('<strong>⏰ Time is up!</strong><br>Generating your feedback and sending it to your email...');
                 document.getElementById('chatInput').style.display = 'none';
-
-                // Trigger END so backend sends email
                 sendMessage("END", true);
                 return;
             }
@@ -756,22 +804,18 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
-                console.log("⏰ Timer stopped");
             }
         }
 
-        // Audio Controls
         function toggleAudio() {
             audioEnabled = !audioEnabled;
             const toggle = document.getElementById('audioToggle');
             toggle.textContent = audioEnabled ? '🔊' : '🔇';
             toggle.classList.toggle('muted', !audioEnabled);
             
-            // Stop current audio if disabling
             if (!audioEnabled && currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
-                // Remove speaking animation from all AI messages
                 document.querySelectorAll('.message.ai.speaking').forEach(msg => {
                     msg.classList.remove('speaking');
                 });
@@ -782,34 +826,27 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             if (!audioEnabled || !textToSpeak) return;
             
             try {
-                // Stop any currently playing speech
                 if (window.speechSynthesis.speaking) {
                     window.speechSynthesis.cancel();
-                    // Remove speaking animation from all messages
                     document.querySelectorAll('.message.ai.speaking').forEach(msg => {
                         msg.classList.remove('speaking');
                     });
                 }
                 
-                // Create speech synthesis utterance
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 
-                // Use the selected voice (Google US English or fallback)
                 if (selectedVoice) {
                     utterance.voice = selectedVoice;
                 }
                 
-                // Configure voice settings for professional interview sound
-                utterance.rate = 0.85;  // Slightly slower for clarity
-                utterance.pitch = 1.0;  // Normal pitch
-                utterance.volume = 1.0; // Full volume
+                utterance.rate = 0.85;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
                 
-                // Add speaking animation to message
                 if (messageElement) {
                     messageElement.classList.add('speaking');
                 }
                 
-                // Event handlers
                 utterance.onend = () => {
                     if (messageElement) {
                         messageElement.classList.remove('speaking');
@@ -823,7 +860,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                     }
                 };
                 
-                // Speak the text
                 window.speechSynthesis.speak(utterance);
                 
             } catch (error) {
@@ -831,7 +867,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             }
         }
         
-        // Convert file to base64
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -844,187 +879,183 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             });
         }
         
-     async function startInterview(interviewType) {
-    candidateEmail = document.getElementById('candidateEmail').value.trim();
-    const resumeFile = document.getElementById('resumeFile').files[0];
-    const jobDescription = document.getElementById('jobDescription').value.trim();
-    currentInterviewType = interviewType;
- 
-    if (!candidateEmail) {
-        showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
-        return;
-    }
-    
-    if (!resumeFile) {
-        showFileStatus('resumeStatus', '❌ Please select a PDF resume file', 'error');
-        return;
-    }
+        async function proceedToCategories() {
+            candidateEmail = document.getElementById('candidateEmail').value.trim();
+            const resumeFile = document.getElementById('resumeFile').files[0];
+            const jobDescription = document.getElementById('jobDescription').value.trim();
+            
+            if (!candidateEmail) {
+                showFileStatus('emailStatus', '❌ Please enter your email address', 'error');
+                return;
+            }
+            
+            if (!resumeFile) {
+                showFileStatus('resumeStatus', '❌ Please select a PDF resume file', 'error');
+                return;
+            }
 
-    if (resumeFile.type !== 'application/pdf') {
-        showFileStatus('resumeStatus', '❌ Please upload a PDF file only', 'error');
-        return;
-    }
+            if (resumeFile.type !== 'application/pdf') {
+                showFileStatus('resumeStatus', '❌ Please upload a PDF file only', 'error');
+                return;
+            }
 
-    // Disable all category buttons
-    const buttons = document.querySelectorAll('.category-btn');
-    buttons.forEach(btn => {
-        btn.disabled = true;
-        btn.textContent = '📄 Processing...';
-    });
-    
-    console.log("🚀 Starting", interviewType, "interview process...");
+            if (!documentsUploaded) {
+                try {
+                    const selectBtn = document.querySelector('.select-interview-btn');
+                    selectBtn.disabled = true;
+                    selectBtn.textContent = '📄 Processing documents...';
+                    
+                    const base64Data = await fileToBase64(resumeFile);
+                    
+                    const uploadPayload = {
+                        sessionId: sessionId,
+                        resumeData: base64Data,
+                        resumeFileName: resumeFile.name,
+                        resumeMimeType: resumeFile.type,
+                        resumeFileSize: resumeFile.size,
+                        jobDescription: jobDescription || "",
+                        candidateEmail: candidateEmail
+                    };
+                    
+                    showTypingIndicator();
+                    
+                    const uploadResponse = await fetch(UPLOAD_URL, {
+                        method: 'POST',
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify(uploadPayload)
+                    });
 
-    try {
-        // Step 1: Upload and process documents
-        console.log("📄 Converting PDF to base64...");
-        const base64Data = await fileToBase64(resumeFile);
-        console.log("✅ PDF converted successfully. Size:", Math.round(base64Data.length / 1024), "KB");
-        
-        buttons.forEach(btn => btn.textContent = '📄 Uploading documents...');
-        
-        // Upload documents first
-        const uploadPayload = {
-            sessionId: sessionId,
-            resumeData: base64Data,
-            resumeFileName: resumeFile.name,
-            resumeMimeType: resumeFile.type,
-            resumeFileSize: resumeFile.size,
-            jobDescription: jobDescription || "",
-            candidateEmail: candidateEmail
-        };
-        
-        console.log("📤 Uploading documents to process...");
-        showTypingIndicator();
-        
-        const uploadResponse = await fetch(UPLOAD_URL, {
-            method: 'POST',
-            headers: { 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(uploadPayload)
-        });
+                    hideTypingIndicator();
 
-        if (!uploadResponse.ok) {
-            throw new Error(`Document upload failed: ${uploadResponse.status}`);
+                    if (!uploadResponse.ok) {
+                        throw new Error(`Document upload failed: ${uploadResponse.status}`);
+                    }
+                    
+                    documentsUploaded = true;
+                    
+                } catch (error) {
+                    hideTypingIndicator();
+                    console.error('Error uploading documents:', error);
+                    addMessage(`<strong>❌ Error processing documents:</strong><br>${error.message}<br><br>Please try again.`, false);
+                    const selectBtn = document.querySelector('.select-interview-btn');
+                    selectBtn.disabled = false;
+                    selectBtn.textContent = 'Select Interview Type';
+                    return;
+                }
+            }
+            
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('categorySelection').style.display = 'block';
         }
         
-        console.log("✅ Documents processed successfully");
-        hideTypingIndicator();
-        
-        // Step 2: Start specific interview type
-        buttons.forEach(btn => btn.textContent = '🤖 Starting interview...');
-        
-        // Set time limits
-        switch (interviewType) {
-            case 'warmup':
-                timeRemaining = 900; // 15 minutes for warmup
-                break;
-            case 'technical':
-                timeRemaining = 900; // 15 minutes for technical
-                break;
-            case 'behavioral':
-                timeRemaining = 900; // 15 minutes for behavioral
-                break;
-            case 'techno-behavioral':
-                timeRemaining = 900; // 15 minutes for techno-behavioral
-                break;
-            case 'complete':
-                timeRemaining = 900; // 15 minutes for complete
-                break;
+        async function startInterview(interviewType) {
+            currentInterviewType = interviewType;
+            
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = '🤖 Starting interview...';
+            });
+            
+            try {
+                switch (interviewType) {
+                    case 'warmup':
+                        timeRemaining = 900;
+                        break;
+                    case 'technical':
+                        timeRemaining = 900;
+                        break;
+                    case 'behavioral':
+                        timeRemaining = 900;
+                        break;
+                    case 'techno-behavioral':
+                        timeRemaining = 900;
+                        break;
+                    case 'complete':
+                        timeRemaining = 900;
+                        break;
+                }
+                
+                const interviewUrls = {
+                    'warmup': WARMUP_URL,
+                    'technical': TECHNICAL_URL,
+                    'behavioral': BEHAVIORAL_URL,
+                    'techno-behavioral': TECHNO_BEHAVIORAL_URL,
+                    'complete': COMPLETE_URL
+                };
+                
+                const interviewPayload = {
+                    message: "Start interview",
+                    sessionId: sessionId,
+                    interviewType: interviewType,
+                    candidateEmail: candidateEmail
+                };
+                
+                showTypingIndicator();
+                
+                const interviewResponse = await fetch(interviewUrls[interviewType], {
+                    method: 'POST',
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(interviewPayload)
+                });
+
+                hideTypingIndicator();
+
+                if (!interviewResponse.ok) {
+                    const errorText = await interviewResponse.text();
+                    throw new Error(`Interview failed: ${interviewResponse.status} - ${errorText}`);
+                }
+                
+                const responseText = await interviewResponse.text();
+                
+                if (!responseText || responseText.trim() === '') {
+                    throw new Error('Empty response from AI interviewer');
+                }
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON response from AI interviewer');
+                }
+
+                if (Array.isArray(data) && data.length > 0) {
+                    data = data[0];
+                }
+
+                setupInterviewUI(data);
+
+            } catch (error) {
+                hideTypingIndicator();
+                console.error('Error starting interview:', error);
+                
+                addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please try again.`, false);
+                
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    const originalText = {
+                        'warmup': '🏃‍♂️ Warm-up',
+                        'technical': '⚙️ Technical', 
+                        'behavioral': '🤝 Behavioral',
+                        'techno-behavioral': '🔬 Techno-Behavioral',
+                        'complete': '🎯 Complete Interview'
+                    };
+                    btn.innerHTML = `<div class="category-title">${originalText[interviewType]}</div>`;
+                });
+            }
         }
-        
-        // Get interview URL
-        const interviewUrls = {
-            'warmup': WARMUP_URL,
-            'technical': TECHNICAL_URL,
-            'behavioral': BEHAVIORAL_URL,
-            'techno-behavioral': TECHNO_BEHAVIORAL_URL,
-            'complete': COMPLETE_URL
-        };
-        
-        // Start interview payload
-        const interviewPayload = {
-            message: "Start interview",
-            sessionId: sessionId,
-            interviewType: interviewType,
-            candidateEmail: candidateEmail
-        };
-        
-        console.log("📤 Starting", interviewType, "interview...");
-        showTypingIndicator();
-        
-        const interviewResponse = await fetch(interviewUrls[interviewType], {
-            method: 'POST',
-            headers: { 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(interviewPayload)
-        });
-
-        console.log("📥 Interview response status:", interviewResponse.status);
-        hideTypingIndicator();
-
-        if (!interviewResponse.ok) {
-            const errorText = await interviewResponse.text();
-            console.log("❌ Interview start failed:", errorText);
-            throw new Error(`Interview failed: ${interviewResponse.status} - ${errorText}`);
-        }
-        
-        const responseText = await interviewResponse.text();
-        console.log("📋 Raw response:", responseText.substring(0, 200) + "...");
-        
-        if (!responseText || responseText.trim() === '') {
-            throw new Error('Empty response from AI interviewer');
-        }
-        
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (parseError) {
-            console.log("❌ JSON parse error:", parseError.message);
-            throw new Error('Invalid JSON response from AI interviewer');
-        }
-
-        // Handle array response
-        if (Array.isArray(data) && data.length > 0) {
-            data = data[0];
-        }
-
-        console.log("✅", interviewType, "interview started successfully");
-
-        // Success! Setup interview UI
-        setupInterviewUI(data);
-
-    } catch (error) {
-        hideTypingIndicator();
-        console.log("❌ Error:", error.message);
-        console.error('Error starting interview:', error);
-        
-        addMessage(`<strong>❌ Error starting interview:</strong><br>${error.message}<br><br>Please try again.`, false);
-        
-        // Re-enable buttons
-        buttons.forEach(btn => {
-            btn.disabled = false;
-            const originalText = {
-                'warmup': '🏃‍♂️ Warm-up',
-                'technical': '⚙️ Technical', 
-                'behavioral': '🤝 Behavioral',
-                'techno-behavioral': '🔬 Techno-Behavioral',
-                'complete': '🎯 Complete Interview'
-            };
-            btn.innerHTML = `<div class="category-title">${originalText[interviewType]}</div>`;
-        });
-    }
-}
         
         function setupInterviewUI(data) {
-            // Hide upload section and show chat input
-            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('categorySelection').style.display = 'none';
             document.getElementById('chatInput').style.display = 'block';
+            document.getElementById('backBtn').style.display = 'block';
 
-            // Add welcome message based on interview type
             const typeMessages = {
                 'warmup': "🏃‍♂️ <strong>Warm-up Interview Started</strong><br>Quick multiple choice questions to get you warmed up!",
                 'technical': "⚙️ <strong>Technical Interview Started</strong><br>Let's test your hard skills and technical knowledge!",
@@ -1035,45 +1066,83 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             
             addMessage(typeMessages[currentInterviewType] || "👨‍💼 <strong>Interview Started</strong><br>");
 
-             // Handle array response
-    if (Array.isArray(data) && data.length > 0) {
-        data = data[0];
-    }
-
-          // Add the AI's first question immediately
-    const aiResponse = data.response || data.output || data.text || '';
-    if (aiResponse && aiResponse.trim()) {
-        setTimeout(() => {
-            const messageElement = addMessage(aiResponse, false, true);
-            
-            // Convert HTML to plain text and speak it
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = aiResponse;
-            const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-            
-            if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
-                setTimeout(() => {
-                    playAudioResponse(textToSpeak, messageElement);
-                }, 800);
+            if (Array.isArray(data) && data.length > 0) {
+                data = data[0];
             }
-        }, 1500);
-    }
+
+            const aiResponse = data.response || data.output || data.text || '';
+            if (aiResponse && aiResponse.trim()) {
+                setTimeout(() => {
+                    const messageElement = addMessage(aiResponse, false, true);
+                    
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = aiResponse;
+                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
+                    
+                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
+                        setTimeout(() => {
+                            playAudioResponse(textToSpeak, messageElement);
+                        }, 800);
+                    }
+                }, 1500);
+            }
             
-    
-            // Start timer only for non-warmup interviews
             if (currentInterviewType !== 'warmup') {
                 startTimer();
             }
             
             interviewStarted = true;
             
-            // Focus on input after a brief delay
             setTimeout(() => {
                 const messageInput = document.getElementById('messageInput');
                 if (messageInput) {
                     messageInput.focus();
                 }
             }, 2000);
+        }
+
+        function goBackToCategories() {
+            stopTimer();
+            
+            interviewStarted = false;
+            
+            const chatMessagesDiv = document.getElementById('chatMessages');
+            const messages = chatMessagesDiv.querySelectorAll('.message');
+            messages.forEach(msg => msg.remove());
+            
+            const intro = document.querySelector('.interview-intro');
+            if (!intro) {
+                const newIntro = document.createElement('div');
+                newIntro.className = 'interview-intro';
+                newIntro.innerHTML = `
+                    <h3><strong>Practice today, conquer tomorrow.</strong></h3>
+                    <p>Upload your resume and job description, then choose the type of interview practice you need.<br>You can end any interview by typing "END" or when the timer ends.</p>
+                `;
+                chatMessagesDiv.insertBefore(newIntro, chatMessagesDiv.firstChild);
+            }
+            
+            document.getElementById('chatInput').style.display = 'none';
+            document.getElementById('categorySelection').style.display = 'block';
+            document.getElementById('backBtn').style.display = 'none';
+            document.getElementById('timer').style.display = 'none';
+            
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const micBtn = document.getElementById('micBtn');
+            if (messageInput) {
+                messageInput.disabled = false;
+                messageInput.value = '';
+            }
+            if (sendBtn) sendBtn.disabled = false;
+            if (micBtn) micBtn.disabled = false;
+            
+            document.querySelector(".end-instruction").textContent = 
+                "Type or say \"END\" to complete the interview and receive feedback via email.";
         }
         
         async function sendMessage(forcedMessage = null, systemTriggered = false) {
@@ -1085,7 +1154,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             
             if (!message) return;
 
-            // Only add user message bubble if it's not system-triggered
             if (!systemTriggered) {
                 addMessage(message, true);
             }
@@ -1096,74 +1164,63 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             }
 
             showTypingIndicator();
-            console.log("📤 Sending message:", message.substring(0, 50) + "...");
             
-          try {
-        // Route to correct URL based on interview type
-        let targetUrl;
-        switch (currentInterviewType) {
-            case 'warmup':
-                targetUrl = WARMUP_URL;
-                break;
-            case 'technical':
-                targetUrl = TECHNICAL_URL;
-                break;
-            case 'behavioral':
-                targetUrl = BEHAVIORAL_URL;
-                break;
-            case 'techno-behavioral':
-                targetUrl = TECHNO_BEHAVIORAL_URL;
-                break;
-            case 'complete':
-                targetUrl = COMPLETE_URL;
-                break;
-            default:
-                targetUrl = CHAT_URL; // fallback
-        }
+            try {
+                let targetUrl;
+                switch (currentInterviewType) {
+                    case 'warmup':
+                        targetUrl = WARMUP_URL;
+                        break;
+                    case 'technical':
+                        targetUrl = TECHNICAL_URL;
+                        break;
+                    case 'behavioral':
+                        targetUrl = BEHAVIORAL_URL;
+                        break;
+                    case 'techno-behavioral':
+                        targetUrl = TECHNO_BEHAVIORAL_URL;
+                        break;
+                    case 'complete':
+                        targetUrl = COMPLETE_URL;
+                        break;
+                }
+                
                 const payload = {
                     message: message,
                     sessionId: sessionId,
                     interviewType: currentInterviewType,
                     candidateEmail: candidateEmail
                 };
-            console.log("📧 Sending to:", targetUrl);
        
-             const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers: { 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
+                const response = await fetch(targetUrl, {
+                    method: 'POST',
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
                 
-                console.log("📥 Chat response status:", response.status);
                 hideTypingIndicator();
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.log("❌ Chat error:", errorText);
                     throw new Error(`Chat failed: ${response.status}`);
                 }
                 
                 const responseText = await response.text();
-                console.log("📋 Raw chat response length:", responseText.length);
 
                 let data;
                 try {
                     data = JSON.parse(responseText);
                 } catch (parseError) {
-                    console.log("❌ JSON parse error:", parseError.message);
                     throw new Error('Invalid JSON response from AI interviewer');
                 }
 
-                // Handle array response from n8n
                 if (Array.isArray(data) && data.length > 0) {
                     data = data[0];
-                    console.log("📋 Using first array item");
                 }
 
-                // Check if interview is ending
                 const responseMessage = data.response || data.output || data.text || '';
                 if (responseMessage.includes("✅ Thanks for completing") || message.toUpperCase() === "END") {
                     stopTimer();
@@ -1175,26 +1232,23 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                     if (sendBtn) sendBtn.disabled = true;
                     if (micBtn) micBtn.disabled = true;
                     document.querySelector(".end-instruction").textContent =
-                        "Interview has ended. Check your email for feedback ✅";
+                        "Interview completed! Check your email for feedback. Click 'Back' to try another category.";
+                    
+                    document.getElementById('backBtn').style.display = 'block';
                 }
 
-                // Add AI response - check multiple possible response fields
                 if (data.response) {
                     const messageElement = addMessage(data.response, false, true);
                     
-                    // Convert HTML to plain text for speech
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = data.response;
                     const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
                     
-                    // Play speech after a small delay (only for non-warmup interviews)
                     if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
                         setTimeout(() => {
                             playAudioResponse(textToSpeak, messageElement);
                         }, 500);
                     }
-                    
-                    console.log("✅ Added AI response");
                 } else if (data.output) {
                     const messageElement = addMessage(data.output, false, true);
                     const tempDiv = document.createElement('div');
@@ -1205,7 +1259,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                             playAudioResponse(textToSpeak, messageElement);
                         }, 500);
                     }
-                    console.log("✅ Added AI output");
                 } else if (data.text) {
                     const messageElement = addMessage(data.text, false, true);
                     const tempDiv = document.createElement('div');
@@ -1216,7 +1269,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                             playAudioResponse(textToSpeak, messageElement);
                         }, 500);
                     }
-                    console.log("✅ Added AI text");
                 } else if (typeof data === 'string') {
                     const messageElement = addMessage(data, false, true);
                     if (data.trim() && currentInterviewType !== 'warmup') {
@@ -1224,15 +1276,12 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                             playAudioResponse(data, messageElement);
                         }, 500);
                     }
-                    console.log("✅ Added string response");
                 } else {
                     addMessage("I need a moment to process your response. Could you please elaborate on that?");
-                    console.log("⚠️ No response field found in:", JSON.stringify(data).substring(0, 100));
                 }
                 
             } catch (error) {
                 hideTypingIndicator();
-                console.log("❌ Chat error:", error.message);
                 addMessage('Sorry, there was a technical issue. Please try again.');
             } finally {
                 sendBtn.disabled = false;
@@ -1243,7 +1292,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             }
         }
 
-        // Speech-to-Text Functions (only for non-warmup interviews)
         async function toggleRecording() {
             if (!interviewStarted || currentInterviewType === 'warmup') return;
             
@@ -1280,15 +1328,13 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     await sendAudioToServer(audioBlob);
                     
-                    // Stop all tracks to turn off microphone
                     stream.getTracks().forEach(track => track.stop());
                     
-                    // Hide recording status
                     const recordingStatus = document.getElementById('recordingStatus');
                     recordingStatus.classList.remove('active');
                 };
                 
-                mediaRecorder.start(250); // Collect data every 250ms
+                mediaRecorder.start(250);
                 isRecording = true;
                 
                 const micBtn = document.getElementById('micBtn');
@@ -1298,8 +1344,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                 micBtn.classList.add('recording');
                 micBtn.title = 'Click to stop recording';
                 recordingStatus.classList.add('active');
-                
-                console.log('🎤 Recording started...');
                 
             } catch (error) {
                 console.error('Error accessing microphone:', error);
@@ -1317,8 +1361,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                 micBtn.classList.remove('recording');
                 micBtn.disabled = true;
                 micBtn.title = 'Processing speech...';
-                
-                console.log('🎤 Recording stopped, processing...');
             }
         }
         
@@ -1326,7 +1368,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             try {
                 showTypingIndicator();
                 
-                // Convert blob to base64
                 const base64Audio = await blobToBase64(audioBlob);
                 
                 const payload = {
@@ -1334,8 +1375,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                     sessionId: sessionId,
                     candidateEmail: candidateEmail
                 };
-                
-                console.log('📤 Sending audio for transcription... Size:', Math.round(audioBlob.size / 1024), 'KB');
                 
                 const response = await fetch(SPEECH_TO_TEXT_URL, {
                     method: 'POST',
@@ -1360,7 +1399,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                     throw new Error('Invalid response from speech service');
                 }
                 
-                // Handle array response
                 if (Array.isArray(data) && data.length > 0) {
                     data = data[0];
                 }
@@ -1368,15 +1406,9 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                 const transcribedText = data.transcription || data.text || '';
                 
                 if (transcribedText.trim()) {
-                    // Put transcribed text in the input field
                     const messageInput = document.getElementById('messageInput');
                     messageInput.value = transcribedText;
-                    
-                    // Focus on the input field so user can edit if needed
                     messageInput.focus();
-                    
-                    console.log('✅ Audio transcribed:', transcribedText);
-                    
                 } else {
                     addMessage('❌ Could not understand the audio. Please try speaking more clearly or use the keyboard.', false);
                 }
@@ -1412,7 +1444,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             }
         }
         
-        // Event listeners
         const messageInput = document.getElementById('messageInput');
         if (messageInput) {
             messageInput.addEventListener('keypress', function(e) {
@@ -1430,7 +1461,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                 if (file) {
                     if (file.type === 'application/pdf') {
                         showFileStatus('resumeStatus', `✅ ${file.name} selected (${Math.round(file.size/1024)} KB)`, 'success');
-                        console.log("📄 File selected:", file.name, "(", file.size, "bytes)");
                     } else {
                         showFileStatus('resumeStatus', '❌ Please select a PDF file', 'error');
                         e.target.value = '';
@@ -1439,7 +1469,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             });
         }
         
-        // Drag and drop functionality
         const uploadSection = document.getElementById('uploadSection');
         
         if (uploadSection) {
@@ -1465,7 +1494,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
                         if (resumeFileInput) {
                             resumeFileInput.files = files;
                             showFileStatus('resumeStatus', `✅ ${file.name} selected`, 'success');
-                            console.log("📄 File dropped:", file.name);
                         }
                     } else {
                         showFileStatus('resumeStatus', '❌ Please drop a PDF file', 'error');
@@ -1474,7 +1502,6 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             });
         }
         
-        // Keyboard shortcut for microphone (Space bar when input is not focused)
         document.addEventListener('keydown', function(e) {
             if (e.code === 'Space' && !e.target.matches('input, textarea') && interviewStarted && currentInterviewType !== 'warmup') {
                 e.preventDefault();
@@ -1491,18 +1518,9 @@ const TECHNO_BEHAVIORAL_URL = `${API_BASE}/techno-behavioral-interview`;
             }
         });
 
-        // Initialize voices when page loads
         document.addEventListener('DOMContentLoaded', () => {
             initializeVoice();
         });
-        
-        console.log("🔧 Frontend initialized with 5 interview categories. API Base:", API_BASE);
-        console.log("💡 Interview Types:");
-        console.log("   🏃‍♂️ Warm-up: Quick MCQ questions (email delivery only)");
-        console.log("   ⚙️ Technical: Hard skills & coding (15 min)");
-        console.log("   🤝 Behavioral: Soft skills & situations (15 min)");
-        console.log("   🔬 Techno-Behavioral: Mixed scenarios (20 min)");
-        console.log("   🎯 Complete: Full 360° assessment (45 min)");
     </script>
 </body>
 </html>
