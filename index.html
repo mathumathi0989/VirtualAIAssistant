@@ -55,16 +55,16 @@
         }
         
         .timer {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.25);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: none;
-            backdrop-filter: blur(10px);
+           position: absolute;
+    top: 20px;
+    right: 80px;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: none;
+    backdrop-filter: blur(10px);
         }
 
         .audio-controls {
@@ -946,6 +946,8 @@
                     return;
                 }
             }
+            const intro = document.querySelector('.interview-intro');
+if (intro) intro.remove();
             
             document.getElementById('uploadSection').style.display = 'none';
             document.getElementById('categorySelection').style.display = 'block';
@@ -1052,7 +1054,11 @@
         }
         
         function setupInterviewUI(data) {
+          
+            
             document.getElementById('categorySelection').style.display = 'none';
+              const intro = document.querySelector('.interview-intro');
+if (intro) intro.remove();
             document.getElementById('chatInput').style.display = 'block';
             document.getElementById('backBtn').style.display = 'block';
 
