@@ -1111,66 +1111,60 @@ if (intro) intro.remove();
 }
         
         function setupInterviewUI(data) {
-          
-            
-            document.getElementById('categorySelection').style.display = 'none';
-              const intro = document.querySelector('.interview-intro');
-if (intro) intro.remove();
-            document.getElementById('chatInput').style.display = 'block';
-            document.getElementById('backBtn').style.display = 'block';
+       document.getElementById('categorySelection').style.display = 'none';
+    const intro = document.querySelector('.interview-intro');
+    if (intro) intro.remove();
+    document.getElementById('chatInput').style.display = 'block';
+    document.getElementById('backBtn').style.display = 'block';
 
-            const typeMessages = {
-                'warmup': "🏃‍♂️ <strong>Warm-up Interview Started</strong><br>Quick multiple choice questions to get you warmed up!",
-                'technical': "⚙️ <strong>Technical Interview Started</strong><br>Let's test your hard skills and technical knowledge!",
-                'behavioral': "🤝 <strong>Behavioral Interview Started</strong><br>Time to showcase your soft skills and experiences!",
-                'techno-behavioral': "🔬 <strong>Techno-Behavioral Interview Started</strong><br>Mixed scenarios combining technical and behavioral elements!",
-                'complete': "🎯 <strong>Complete Interview Started</strong><br>Full 360° assessment covering all aspects!"
-            };
-            
-            addMessage(typeMessages[currentInterviewType] || "👨‍💼 <strong>Interview Started</strong><br>");
+    const typeMessages = {
+        'warmup': "🏃‍♂️ <strong>Warm-up Interview Started</strong><br>Quick multiple choice questions to get you warmed up!",
+        'technical': "⚙️ <strong>Technical Interview Started</strong><br>Let's test your hard skills and technical knowledge!",
+        'behavioral': "🤝 <strong>Behavioral Interview Started</strong><br>Time to showcase your soft skills and experiences!",
+        'techno-behavioral': "🔬 <strong>Techno-Behavioral Interview Started</strong><br>Mixed scenarios combining technical and behavioral elements!",
+        'complete': "🎯 <strong>Complete Interview Started</strong><br>Full 360° assessment covering all aspects!"
+    };
+    
+    addMessage(typeMessages[currentInterviewType] || "👨‍💼 <strong>Interview Started</strong><br>");
 
-            if (Array.isArray(data) && data.length > 0) {
-                data = data[0];
-            }
+    if (Array.isArray(data) && data.length > 0) {
+        data = data[0];
+    }
 
-            const aiResponse = data.response || data.output || data.text || '';
-            if (aiResponse && aiResponse.trim()) {
-                setTimeout(() => {
-                    const messageElement = addMessage(aiResponse, false, false);
+    const aiResponse = data.response || data.output || data.text || '';
+    if (aiResponse && aiResponse.trim()) {
+        setTimeout(() => {
+            const messageElement = addMessage(aiResponse, false, false);
 
-                    if (currentInterviewType === 'warmup') {
-            renderMCQOptions(aiResponse);
-        }
-    }, 1500);
+            if (currentInterviewType === 'warmup') {
+                renderMCQOptions(aiResponse);
+            } else {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = aiResponse;
+                const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
                 
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = aiResponse;
-                    const textToSpeak = tempDiv.textContent || tempDiv.innerText || '';
-                    
-                    if (textToSpeak.trim() && currentInterviewType !== 'warmup') {
-                        setTimeout(() => {
-                            playAudioResponse(textToSpeak, messageElement);
-                        }, 800);
-                    }
-                }, 1500);
-            }
-            
-            if (currentInterviewType !== 'warmup') {
-                startTimer();
-            }
-            
-            interviewStarted = true;
-            
-            setTimeout(() => {
-                const messageInput = document.getElementById('messageInput');
-                if (messageInput) {
-                    messageInput.focus();
+                if (textToSpeak.trim()) {
+                    setTimeout(() => {
+                        playAudioResponse(textToSpeak, messageElement);
+                    }, 800);
                 }
-            }, 2000);
-
-            if (currentInterviewType === 'warmup' && aiResponse.includes('A)') || aiResponse.includes('B)')) {
-    renderMCQOptions(aiResponse);
-}
+            }
+        }, 1500);
+    }
+    
+    if (currentInterviewType !== 'warmup') {
+        startTimer();
+    }
+    
+    interviewStarted = true;
+    
+    setTimeout(() => {
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) {
+            messageInput.focus();
+        }
+    }, 2000);
+            
             
         }
 
